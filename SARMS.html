@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SARM Compound Library</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #0e0f11;
+        --card: rgba(255, 255, 255, 0.04);
+        --card-glow: rgba(0, 255, 204, 0.35);
+        --accent: #00ffd0;
+        --text: #eef3f7;
+        --text-dim: #8392a7;
+        --radius: 1.25rem;
+        --transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+      }
+      *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:"Inter",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+      header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;max-width:1200px;margin:0 auto}
+      a.logo{color:var(--text);font-weight:700;text-decoration:none}
+      main{max-width:1200px;margin:0 auto;padding:2.5rem 1.5rem}
+      h1{font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:1.75rem;position:relative}
+      h1::after{content:"";position:absolute;bottom:-6px;left:0;width:64px;height:3px;background:var(--accent);border-radius:2px}
+      .search-bar{width:100%;max-width:560px;margin:0 auto 2.2rem}
+      .search-bar input{width:100%;padding:0.85rem 1rem;background:var(--card);border:1px solid transparent;border-radius:var(--radius);color:var(--text);font-size:1rem;transition:border 0.3s ease}
+      .search-bar input:focus{outline:none;border-color:var(--accent)}
+      .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.5rem}
+      .card{background:var(--card);backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:1.5rem;position:relative;overflow:hidden;transform:translateY(20px);opacity:0;transition:var(--transition);cursor:pointer}
+      .card.show{transform:none;opacity:1}
+      .card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,var(--card-glow) 0%,transparent 60%);opacity:0;transition:opacity 0.4s ease}
+      .card:hover::before{opacity:1}
+      .card h3{font-size:1.1rem;margin-bottom:0.35rem}
+      .tag{display:inline-block;font-size:0.75rem;background:var(--accent);color:#000814;padding:2px 6px;border-radius:4px;font-weight:600;margin-bottom:0.9rem}
+      .card p{font-size:0.88rem;color:var(--text-dim);white-space:pre-line}
+      /* modal */
+      .hidden{display:none !important}
+      #modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:flex;justify-content:center;align-items:center;padding:1.5rem;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.4s ease}
+      #modal.active{opacity:1;pointer-events:all}
+      .modal-content{background:var(--card);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);max-width:540px;width:100%;padding:2rem 1.75rem;position:relative;animation:fadeUp 0.45s ease}
+      @keyframes fadeUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+      .modal-content h3{margin-bottom:0.9rem;font-size:1.5rem}
+      .close-btn{position:absolute;top:1.1rem;right:1.1rem;font-size:1.3rem;background:none;border:none;color:var(--text-dim);cursor:pointer;transition:color 0.3s ease}
+      .close-btn:hover{color:var(--accent)}
+    </style>
+  </head>
+  <body>
+    <header>
+      <a class="logo" href="index.html">← Home</a>
+    </header>
+    <main>
+      <h1>Selectively‑Androgen Receptor Modulators (SARMs)</h1>
+      <div class="search-bar"><input type="text" id="search" placeholder="Search SARMs…" /></div>
+      <div class="grid" id="grid"></div>
+    </main>
+
+    <div id="modal" class="hidden" tabindex="-1"><div class="modal-content"></div></div>
+
+    <script>
+      /* ----------------------------- DATA -------------------------------- */
+      const sarms = [
+ // --- 1. First-generation / well-known ---------------------------------
+  {
+    name: "RAD-140 (Testolone)",
+    dose: "10–20 mg oral daily",
+    pros: "Very high anabolic : androgenic ratio; size & strength gains; bone density ↑",
+    cons: "Liver-enzymes (ALT/AST) ↑; HDL ↓; full HPTA suppression at ≥10 mg",
+    details: "Tricyclic non-steroidal AR agonist with ~28 h half-life; shows 40× greater AR affinity than testosterone while sparing prostate in primate data."
+  },
+  {
+    name: "LGD-4033 (Ligandrol)",
+    dose: "5–10 mg oral daily",
+    pros: "Robust lean-mass & strength increase; good oral bio-availability",
+    cons: "Total/Free T ↓ 55–85 % after 3 wk; HDL ↓; mild SHBG drop",
+    details: "Pyrrolidine SARM (t½ ≈24 h) that added 1.5 kg LBM in a 21-day human study at only 1 mg/day."
+  },
+  {
+    name: "MK-2866 (Ostarine, Enobosarm)",
+    dose: "20–30 mg oral daily",
+    pros: "Mild anabolic with joint/ligament benefit; minimal BP/lipid impact",
+    cons: "HPTA suppression at >20 mg; mild ALT ↑ in some",
+    details: "Phase-III cancer-cachexia drug; 12-h half-life; lowest side-effect SARM for first-time users."
+  },
+  {
+    name: "S4 (Andarine)",
+    dose: "25–50 mg oral BID (split due to 4-h t½)",
+    pros: "Noticeable fat-loss hardness; strong AR binding; early contest prep favourite",
+    cons: "Night-vision tint (‘yellow filter’) & light adaptation delay; LDL ↑ at high dose",
+    details: "First-generation SARM originally for BPH; vision side-effect from partial agonism at retinal AR."
+  },
+
+  // --- 2. Higher-potency / 2nd-gen --------------------------------------
+  {
+    name: "LGD-3303",
+    dose: "10–15 mg oral daily",
+    pros: "Greater bone-anabolic potency than LGD-4033; may stack well with GH",
+    cons: "Limited human safety data; stronger suppression than LGD-4033",
+    details: "Tetrahydro-quinoline SARM whose demethylated metabolite maintains high AR affinity but minimal prostate stimulation in rat models."
+  },
+  {
+    name: "S23",
+    dose: "10–20 mg oral daily",
+    pros: "Very dry, hard look; candidate male contraceptive (zero sperm in rats)",
+    cons: "Severe suppression even at 10 mg; dark-brown urine possible; aggression spikes",
+    details: "Diaryl-propionamide SARM with AR-binding KD ≈1.7 nM (stronger than RAD-140); increases FSH/LH suppression dose-dependently."
+  },
+  {
+    name: "AC-262536",
+    dose: "15–30 mg oral daily",
+    pros: "Lean mass with *minimal* prostate weight gain; mild lipid impact",
+    cons: "Modest overall gains; short t½ (~6 h) → BID ideal",
+    details: "Indole-based partial agonist (60 % of DHT’s anabolic activity) engineered for osteoporosis but never advanced past animals."
+  },
+  {
+    name: "LGD-2226",
+    dose: "10–20 mg oral daily",
+    pros: "Long half-life (~13 h); good muscle retention during calorie deficit",
+    cons: "Not commercially available; preclinical only; liver enzymes ↑ in dogs",
+    details: "Triazolopyrimidine SARM with strong AR selectivity and 46 % oral bio-availability in canines."
+  },
+  {
+    name: "TLB-150 (RAD-150, Testolone-Benzoate)",
+    dose: "20–40 mg oral daily",
+    pros: "Esterified RAD-140 → longer half-life & steadier levels; less frequent dosing",
+    cons: "No formal toxicology; same liver/lipid issues as RAD; more expensive",
+    details: "Benzoate-ester prodrug hydrolyses in vivo to RAD-140, delivering a slower release curve similar to a short injectable ester."
+  },
+
+  // --- 3. Myostatin & hybrid agents ------------------------------------
+  {
+    name: "YK-11",
+    dose: "5–10 mg oral daily",
+    pros: "Up-regulates follistatin → myostatin blockade; very dry lean-mass look",
+    cons: "Steroidal structure means liver strain; scant human research; suppression",
+    details: "19-nor steroid that is a partial AR agonist and potent SMAD3 antagonist—combining SARM-like lean gains with myostatin inhibition."
+  },
+
+  // --- 4. Endurance / metabolic “SARM-adjacent” -------------------------
+  {
+    name: "GW-501516 (Cardarine)",
+    dose: "10–20 mg oral daily",
+    pros: "Endurance ↑; fatty-acid oxidation; HDL ↑, TG ↓",
+    cons: "High-dose rodent studies showed rapid GI tumour formation; WADA ban",
+    details: "Selective PPAR-δ agonist that up-regulates CPT-1 and oxidative type-I muscle fibers — *not* an AR modulator."
+  },
+  {
+    name: "SR9009 (Stenabolic)",
+    dose: "20–30 mg oral daily (split q4h)",
+    pros: "Increases basal metabolism & wakefulness; clock-gene alignment",
+    cons: "Very poor oral bio-availability; needs frequent dosing; efficacy debated",
+    details: "REV-ERBα/β agonist that boosts mitochondria count and shifts substrate usage toward lipids in mouse studies."
+  },
+  {
+    name: "MK-677 (Ibutamoren)",
+    dose: "10–25 mg oral nightly",
+    pros: "GH/IGF-1 ↑ 40–70 %; deeper REM sleep; joint healing support",
+    cons: "Water retention & appetite surge; mild insulin resistance; numb hands (CTS-like)",
+    details: "Non-peptide ghrelin mimetic (GHSR-1a agonist) that raises GH pulsatility for 24 h—often stacked with SARMs for synergistic growth."
+  }
+      ];
+
+      /* --------------------- INIT --------------------------- */
+      const grid = document.getElementById("grid");
+      const searchInput = document.getElementById("search");
+
+      const createCard = (c) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.name = c.name.toLowerCase();
+        card.innerHTML = `
+          <span class="tag">${c.dose}</span>
+          <h3>${c.name}</h3>
+          <p><strong>Pros:</strong>\n${c.pros}</p>
+          <p style="margin-top:0.6rem"><strong>Cons:</strong>\n${c.cons}</p>
+        `;
+        card.addEventListener("click", () => openModal(c));
+        return card;
+      };
+
+      const render = () => {
+        sarms.forEach((c) => grid.appendChild(createCard(c)));
+        document.querySelectorAll(".card").forEach((el) => observer.observe(el));
+      };
+
+      /* ---------------- SEARCH ---------------- */
+      searchInput.addEventListener("input", (e) => {
+        const q = e.target.value.toLowerCase();
+        grid.querySelectorAll(".card").forEach((card) => {
+          card.style.display = card.dataset.name.includes(q) ? "block" : "none";
+        });
+      });
+
+      /* ---------------- MODAL ---------------- */
+      const modal = document.getElementById("modal");
+      const modalContent = modal.querySelector(".modal-content");
+      const openModal = (compound) => {
+        modalContent.innerHTML = `
+          <button class="close-btn" aria-label="Close modal">×</button>
+          <h3>${compound.name}</h3>
+          <p><strong>Standard Dose:</strong> ${compound.dose}</p>
+          <p style="margin-top:0.9rem;white-space:pre-line;"><strong>Pros:</strong>\n${compound.pros}</p>
+          <p style="margin-top:0.9rem;white-space:pre-line;"><strong>Cons:</strong>\n${compound.cons}</p>
+        `;
+        modal.classList.add("active");
+        modal.classList.remove("hidden");
+        modalContent.querySelector(".close-btn").addEventListener("click", closeModal);
+      };
+      const closeModal = () => {
+        modal.classList.remove("active");
+        setTimeout(() => modal.classList.add("hidden"), 300);
+      };
+      modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("active")) closeModal(); });
+
+      /* -------------- Scroll Reveal ------------- */
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("show");
+          obs.unobserve(entry.target);
+        });
+      }, {threshold:0.15});
+
+      render();
+    </script>
+  </body>
+</html>

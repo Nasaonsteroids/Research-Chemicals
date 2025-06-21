@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Research Compound Guide</title>
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ---------- CSS VARIABLES ---------- */
+      :root {
+        --bg: #0e0f11;
+        --card: rgba(255, 255, 255, 0.04);
+        --card-glow: rgba(0, 255, 204, 0.35);
+        --accent: #00ffd0;
+        --text: #eef3f7;
+        --text-dim: #8392a7;
+        --radius: 1.25rem;
+        --transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+
+      /* ---------- NAV ---------- */
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        backdrop-filter: blur(14px) saturate(160%);
+        background: rgba(14, 15, 17, 0.55);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        z-index: 50;
+        transition: var(--transition);
+      }
+      nav {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+      }
+      nav a {
+        color: var(--text);
+        margin-left: 1.5rem;
+        text-decoration: none;
+        font-weight: 500;
+        position: relative;
+      }
+      nav a::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -4px;
+        width: 100%;
+        height: 2px;
+        background: var(--accent);
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.4s ease;
+      }
+      nav a:hover::after {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
+
+      /* ---------- HERO ---------- */
+      .hero {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        height: 88vh;
+        padding-top: 80px; /* navbar height */
+        position: relative;
+        overflow: hidden;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6vw, 4rem);
+        margin-bottom: 1rem;
+        letter-spacing: -1px;
+      }
+      .hero p {
+        color: var(--text-dim);
+        max-width: 560px;
+      }
+      /* soft gradient rings */
+      .ring {
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+        mix-blend-mode: screen;
+        animation: pulse 12s ease-in-out infinite;
+      }
+      .ring:nth-child(1) {
+        width: 480px;
+        height: 480px;
+        background: radial-gradient(var(--accent), transparent 60%);
+        top: -160px;
+        left: -160px;
+      }
+      .ring:nth-child(2) {
+        width: 640px;
+        height: 640px;
+        background: radial-gradient(#ff00f7, transparent 60%);
+        bottom: -240px;
+        right: -240px;
+        animation-delay: 4s;
+      }
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+          opacity: 0.65;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 1;
+        }
+      }
+
+      /* ---------- SECTION HEADING ---------- */
+      section {
+        padding: 4.5rem 1.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      section h2 {
+        font-size: clamp(1.75rem, 3vw, 2.5rem);
+        margin-bottom: 2.5rem;
+        position: relative;
+      }
+      section h2::after {
+        content: "";
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 64px;
+        height: 3px;
+        background: var(--accent);
+        border-radius: 2px;
+      }
+
+      /* ---------- VIEW ALL BUTTON ---------- */
+      .view-btn {
+        display: inline-block;
+        margin: 0 0 2.2rem;
+        padding: 0.55rem 1.1rem;
+        border-radius: var(--radius);
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        background: transparent;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.35s ease, color 0.35s ease;
+      }
+      .view-btn:hover {
+        background: var(--accent);
+        color: #001d18;
+      }
+
+      /* ---------- SEARCH ---------- */
+      .search-bar {
+        width: 100%;
+        max-width: 560px;
+        margin: 0 auto 2.2rem;
+        position: relative;
+      }
+      .search-bar input {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        background: var(--card);
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        color: var(--text);
+        font-size: 1rem;
+        transition: border 0.3s ease;
+      }
+      .search-bar input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      /* ---------- CARD GRID ---------- */
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 1.5rem;
+      }
+      .card {
+        background: var(--card);
+        backdrop-filter: blur(22px) saturate(160%);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        transform: translateY(20px);
+        opacity: 0;
+        transition: var(--transition);
+        cursor: pointer;
+      }
+      .card.show {
+        transform: none;
+        opacity: 1;
+      }
+      .card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, var(--card-glow) 0%, transparent 60%);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+      .card:hover::before {
+        opacity: 1;
+      }
+      .card h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.35rem;
+      }
+      .tag {
+        display: inline-block;
+        font-size: 0.75rem;
+        background: var(--accent);
+        color: #000814;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+        margin-bottom: 0.9rem;
+      }
+      .card p {
+        font-size: 0.88rem;
+        color: var(--text-dim);
+        white-space: pre-line;
+      }
+
+      /* ---------- MODAL ---------- */
+      .hidden {
+        display: none !important;
+      }
+      #modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 1.5rem;
+        z-index: 100;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+      }
+      #modal.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .modal-content {
+        background: var(--card);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: var(--radius);
+        max-width: 540px;
+        width: 100%;
+        padding: 2rem 1.75rem;
+        position: relative;
+        animation: fadeUp 0.45s ease;
+      }
+      @keyframes fadeUp {
+        from {
+          transform: translateY(40px);
+          opacity: 0;
+        }
+        to {
+          transform: none;
+          opacity: 1;
+        }
+      }
+      .modal-content h3 {
+        margin-bottom: 0.9rem;
+        font-size: 1.5rem;
+      }
+      .close-btn {
+        position: absolute;
+        top: 1.1rem;
+        right: 1.1rem;
+        font-size: 1.3rem;
+        background: none;
+        border: none;
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: color 0.3s ease;
+      }
+      .close-btn:hover {
+        color: var(--accent);
+      }
+
+      /* ---------- FOOTER ---------- */
+      footer {
+        padding: 3rem 1.5rem;
+        text-align: center;
+        color: var(--text-dim);
+        font-size: 0.85rem;
+      }
+
+      /* ---------- MEDIA ---------- */
+      @media (max-width: 540px) {
+        nav a {
+          margin-left: 0.9rem;
+        }
+        .hero h1 {
+          line-height: 1.1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <strong>Compound Guide</strong>
+        <div>
+          <a href="#peptides">Peptides</a>
+          <a href="#aas">AAS</a>
+          <a href="#sarms">SARMs</a>
+          <a href="#serms">SERMs</a>
+        </div>
+      </nav>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero fade-in">
+      <span class="ring"></span>
+      <span class="ring"></span>
+      <h1>Research-Only Compound Library</h1>
+      <p>
+        Browse dosing, pros & cons for peptides, anabolic-androgenic steroids (AAS), SARMs and SERMs.
+        Strictly educational — always consult qualified medical professionals before any
+        experimentation.
+      </p>
+    </section>
+
+    <!-- PEPTIDES -->
+    <section id="peptides" class="fade-in">
+      <h2>Peptides</h2>
+      <a class="view-btn" href="category.html?type=peptides">View All →</a>
+      <div class="search-bar"><input type="text" id="search-peptides" placeholder="Search peptides…" /></div>
+      <div class="grid" id="grid-peptides"></div>
+    </section>
+
+    <!-- AAS -->
+    <section id="aas" class="fade-in">
+      <h2>Anabolic-Androgenic Steroids (AAS)</h2>
+      <a class="view-btn" href="category.html?type=aas">View All →</a>
+      <div class="search-bar"><input type="text" id="search-aas" placeholder="Search steroids…" /></div>
+      <div class="grid" id="grid-aas"></div>
+    </section>
+
+    <!-- SARMS -->
+    <section id="sarms" class="fade-in">
+      <h2>SARMs</h2>
+      <a class="view-btn" href="category.html?type=sarms">View All →</a>
+      <div class="search-bar"><input type="text" id="search-sarms" placeholder="Search SARMs…" /></div>
+      <div class="grid" id="grid-sarms"></div>
+    </section>
+
+    <!-- SERMS / Ancillaries -->
+    <section id="serms" class="fade-in">
+      <h2>SERMs & Ancillaries</h2>
+      <a class="view-btn" href="category.html?type=serms">View All →</a>
+      <div class="search-bar"><input type="text" id="search-serms" placeholder="Search SERMs…" /></div>
+      <div class="grid" id="grid-serms"></div>
+    </section>
+
+    <!-- MODAL -->
+    <div id="modal" class="hidden" tabindex="-1">
+      <div class="modal-content" role="dialog" aria-modal="true"></div>
+    </div>
+
+    <footer>© 2025 • Educational reference only • No medical claims • Always verify legality in your jurisdiction. • Information can be wrong since this was made with the help of AI</footer>
+
+    <script>
+      /* ---------------------------- DATA ---------------------------- */
+      // Expand freely by adding more objects following the same schema.
+      const data = {
+        peptides: [
+          {
+            name: "Semaglutide",
+            dose: "0.25–2.4 mg SC weekly",
+            pros: "✔ Robust appetite suppression\n✔ 10–15 % mean weight‑loss",
+            cons: "✘ Nausea/vomiting\n✘ Pancreatitis risk",
+            details: "GLP‑1 receptor agonist initially developed for T2D, later approved for chronic weight management. Slows gastric emptying & suppresses appetite through central pathways. Clinical trials (STEP series) show ~15% weight‑loss over 68 wks with lifestyle intervention.",
+          },
+          {
+            name: "Tirzepatide",
+            dose: "2.5–15 mg SC weekly",
+            pros: "✔ Superior HbA1c & weight drop vs semaglutide",
+            cons: "✘ Costly\n✘ GI upset (nausea/burping)",
+            details: "Dual GIP/GLP‑1 agonist. SURMOUNT‑1 obesity trial hit 22.5% weight‑loss at 72 wks (15 mg). GIP component may blunt GLP‑1‑related nausea & further improve metabolic profile.",
+          },
+          {
+            name: "BPC‑157",
+            dose: "200–500 mcg SC near injury",
+            pros: "✔ Accelerates tendon & ligament healing",
+            cons: "✘ Limited human trials",
+            details: "Pentadecapeptide derived from gastric juice. Animal data shows angiogenesis & collagen deposition improvements. Anecdotal human use widespread yet unapproved by FDA.",
+          },
+        ],
+        aas: [
+          {
+            name: "Testosterone Enanthate",
+            dose: "200–600 mg IM weekly",
+            pros: "✔ Gold‑standard anabolic\n✔ Maintains libido & mood",
+            cons: "✘ Aromatization → E2 & water retention\n✘ Hematocrit ↑",
+            details: "Long‑ester testosterone releasing over 5–7 days. Baseline for most cycles. Monitor estradiol, hematology, lipids. Liver‑safe but raises blood viscosity at high doses.",
+          },
+          {
+            name: "Boldenone Undecylenate (EQ)",
+            dose: "300–600 mg IM weekly",
+            pros: "✔ RBC & appetite ↑\n✔ Lean gains, low aromatization",
+            cons: "✘ Anxiety/BP ↑\n✘ Possible appetite suppression high doses",
+            details: "EQ is Δ1‑testosterone; mild aromatization (~50% of T). Popular for recomposition due to moderate estrogenic activity. Require GWAS RBC monitoring (polycythemia risk).",
+          },
+          {
+            name: "Trenbolone Acetate",
+            dose: "300–450 mg IM weekly",
+            pros: "✔ Dramatic strength & recomposition",
+            cons: "✘ Night sweats, insomnia, prolactin ↑",
+            details: "19‑nor powerhouse binding AR and PR; increases IGF‑1 locally. Extremely androgenic; neurological side‑effects (anxiety, insomnia) common. No aromatization but progestin activity.",
+          },
+        ],
+        sarms: [
+          {
+            name: "RAD‑140 (Testolone)",
+            dose: "10–20 mg oral daily",
+            pros: "✔ High anabolic : androgenic\n✔ Lean mass",
+            cons: "✘ ALT/AST ↑\n✘ Test suppression",
+            details: "Phase‑1 human data shows modest HDL drop & test suppression at ≥150 mg; preclinical breast‑cancer protectivity. Oral bioavailability ~70%.",
+          },
+          {
+            name: "LGD‑4033 (Ligandrol)",
+            dose: "5–10 mg oral daily",
+            pros: "✔ Size & strength gains",
+            cons: "✘ Lipids ↓\n✘ HPTA suppression",
+            details: "Phase‑2 hip fracture trial; 1 mg grew 1.2 kg LBM in 3 weeks. Nine‑hour half‑life; minimal AR effect on prostate at low doses.",
+          },
+          {
+            name: "MK‑677 (Ibutamoren)",
+            dose: "10–25 mg before bed",
+            pros: "✔ GH/IGF‑1 ↑\n✔ Sleep quality",
+            cons: "✘ Water retention\n✘ Insulin‑resistance risk",
+            details: "Non‑peptide GHSr agonist. 24‑h GH pulsatile elevation; increases REM sleep & appetite. Long‑term use can impair fasting glucose. Half‑life 4–6 h but IGF‑1 elevation lasts 24 h.",
+          },
+        ],
+        serms: [
+          {
+            name: "Tamoxifen (Nolvadex)",
+            dose: "20 mg oral nightly (PCT 4 wks)",
+            pros: "✔ Blocks breast‑tissue ER\n✔ Cheap & accessible",
+            cons: "✘ Clot risk\n✘ Vision changes",
+            details: "Mixed ER agonist/antagonist. Lowers IGF‑1; may mildly raise SHBG. In PCT it displaces estradiol at hypothalamus, increasing GnRH → LH/FSH. Contraindicated in high clot risk.",
+          },
+          {
+            name: "Clomid (Clomiphene)",
+            dose: "50 mg nightly taper",
+            pros: "✔ Restarts HPTA",
+            cons: "✘ Mood swings\n✘ Vision spots",
+            details: "Mixture of zuclomiphene & enclomiphene isomers. More potent hypothalamic anti‑estrogen than tamoxifen but with stronger side‑effects. Enclomiphene alone in trials for TRT.",
+          },
+          {
+            name: "Arimidex (Anastrozole)",
+            dose: "0.25–0.5 mg EOD",
+            pros: "✔ Controls estrogen on aromatizing cycles",
+            cons: "✘ HDL ↓\n✘ Joint ache if E2 too low",
+            details: "Type‑II reversible AI. On‑cycle E2 target ~20‑40 pg/mL; overdosing crashes HDL and impairs bone mineral density. Half‑life 46 h. Monitor lipids.",
+          },
+        ],
+      };
+
+      /* ------------------------- RENDER UI -------------------------- */
+      const createCard = (c) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.name = c.name.toLowerCase();
+        card.innerHTML = `
+          <span class="tag">${c.dose}</span>
+          <h3>${c.name}</h3>
+          <p><strong>Pros:</strong>\n${c.pros}</p>
+          <p style="margin-top:0.6rem"><strong>Cons:</strong>\n${c.cons}</p>
+        `;
+        card.addEventListener("click", () => openModal(c));
+        return card;
+      };
+
+      const grids = {
+        peptides: document.getElementById("grid-peptides"),
+        aas: document.getElementById("grid-aas"),
+        sarms: document.getElementById("grid-sarms"),
+        serms: document.getElementById("grid-serms"),
+      };
+      const sliceAmount = 6; // entries visible before View All
+
+      Object.keys(data).forEach((category) => {
+        data[category].forEach((compound, idx) => {
+          const card = createCard(compound);
+          if (idx >= sliceAmount) card.classList.add("hidden");
+          grids[category].appendChild(card);
+        });
+      });
+
+      /* -------------------- SEARCH FUNCTION ------------------------- */
+      const searchInputs = {
+        peptides: document.getElementById("search-peptides"),
+        aas: document.getElementById("search-aas"),
+        sarms: document.getElementById("search-sarms"),
+        serms: document.getElementById("search-serms"),
+      };
+
+      Object.keys(searchInputs).forEach((key) => {
+        searchInputs[key].addEventListener("input", (e) => {
+          const query = e.target.value.toLowerCase();
+          grids[key].querySelectorAll(".card").forEach((card) => {
+            card.style.display = card.dataset.name.includes(query) ? "block" : "none";
+          });
+        });
+      });
+
+      /* ---------------- VIEW ALL / COLLAPSE ------------------------- */
+      const buttons = document.querySelectorAll(".view-btn");
+
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const cat = btn.dataset.target;
+          const hiddenCards = grids[cat].querySelectorAll(".card.hidden");
+          const isCollapsed = hiddenCards.length > 0;
+          hiddenCards.forEach((c) => c.classList.toggle("hidden", !isCollapsed));
+          btn.textContent = isCollapsed ? "Collapse" : "View All";
+        });
+      });
+
+      /* ---------------- MODAL FUNCTIONS ----------------------------- */
+      const modal = document.getElementById("modal");
+      const modalContent = modal.querySelector(".modal-content");
+
+      const openModal = (compound) => {
+        modalContent.innerHTML = `
+          <button class="close-btn" aria-label="Close modal">×</button>
+          <h3>${compound.name}</h3>
+          <p><strong>Standard Dose:</strong> ${compound.dose}</p>
+          <p style="margin-top:0.9rem; white-space:pre-line;"><strong>Pros:</strong>\n${compound.pros}</p>
+          <p style="margin-top:0.9rem; white-space:pre-line;"><strong>Cons:</strong>\n${compound.cons}</p>
+          ${compound.details ? `<p style="margin-top:0.9rem; white-space:pre-line;">${compound.details}</p>` : ""}
+        `;
+        modal.classList.add("active");
+        modal.classList.remove("hidden");
+        modalContent.querySelector(".close-btn").addEventListener("click", closeModal);
+      };
+      const closeModal = () => {
+        modal.classList.remove("active");
+        setTimeout(() => modal.classList.add("hidden"), 300);
+      };
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("active")) closeModal();
+      });
+
+      /* ----------------- SCROLL REVEAL ANIMATIONS ------------------- */
+      const faders = document.querySelectorAll(".fade-in, .card");
+      const appearOptions = {
+        threshold: 0.15,
+      };
+
+      const appearOnScroll = new IntersectionObserver(function (entries, observer) {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("show");
+          observer.unobserve(entry.target);
+        });
+      }, appearOptions);
+
+      faders.forEach((el) => appearOnScroll.observe(el));
+    </script>
+  </body>
+</html>

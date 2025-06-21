@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Compound Library – Category View</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #0e0f11;
+        --card: rgba(255, 255, 255, 0.04);
+        --card-glow: rgba(0, 255, 204, 0.35);
+        --accent: #00ffd0;
+        --text: #eef3f7;
+        --text-dim: #8392a7;
+        --radius: 1.25rem;
+        --transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+      }
+      *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:"Inter",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+      header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;max-width:1200px;margin:0 auto}
+      a.logo{color:var(--text);font-weight:700;text-decoration:none}
+      .select-wrap{position:relative}
+      select{background:var(--card);border:1px solid var(--accent);color:var(--accent);padding:0.45rem 1rem;border-radius:var(--radius);cursor:pointer;font-weight:600}
+      main{max-width:1200px;margin:0 auto;padding:2.5rem 1.5rem}
+      h1{font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:1.75rem;position:relative}
+      h1::after{content:"";position:absolute;bottom:-6px;left:0;width:64px;height:3px;background:var(--accent);border-radius:2px}
+      .search-bar{width:100%;max-width:560px;margin:0 auto 2.2rem}
+      .search-bar input{width:100%;padding:0.85rem 1rem;background:var(--card);border:1px solid transparent;border-radius:var(--radius);color:var(--text);font-size:1rem;transition:border 0.3s ease}
+      .search-bar input:focus{outline:none;border-color:var(--accent)}
+      .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.5rem}
+      .card{background:var(--card);backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:1.5rem;position:relative;overflow:hidden;transform:translateY(20px);opacity:0;transition:var(--transition);cursor:pointer}
+      .card.show{transform:none;opacity:1}
+      .card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,var(--card-glow) 0%,transparent 60%);opacity:0;transition:opacity 0.4s ease}
+      .card:hover::before{opacity:1}
+      .card h3{font-size:1.1rem;margin-bottom:0.35rem}
+      .tag{display:inline-block;font-size:0.75rem;background:var(--accent);color:#000814;padding:2px 6px;border-radius:4px;font-weight:600;margin-bottom:0.9rem}
+      .card p{font-size:0.88rem;color:var(--text-dim);white-space:pre-line}
+      /* modal */
+      .hidden{display:none !important}
+      #modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:flex;justify-content:center;align-items:center;padding:1.5rem;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.4s ease}
+      #modal.active{opacity:1;pointer-events:all}
+      .modal-content{background:var(--card);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);max-width:540px;width:100%;padding:2rem 1.75rem;position:relative;animation:fadeUp 0.45s ease}
+      @keyframes fadeUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+      .modal-content h3{margin-bottom:0.9rem;font-size:1.5rem}
+      .close-btn{position:absolute;top:1.1rem;right:1.1rem;font-size:1.3rem;background:none;border:none;color:var(--text-dim);cursor:pointer;transition:color 0.3s ease}
+      .close-btn:hover{color:var(--accent)}
+    </style>
+  </head>
+  <body>
+    <header>
+      <a class="logo" href="index.html">← Home</a>
+      <div class="select-wrap">
+        <select id="category-select" aria-label="Select category">
+          <option value="peptides">Peptides</option>
+          <option value="aas">AAS</option>
+          <option value="sarms">SARMs</option>
+          <option value="serms">SERMs & Ancillaries</option>
+        </select>
+      </div>
+    </header>
+    <main>
+      <h1 id="cat-title">Loading…</h1>
+      <div class="search-bar"><input type="text" id="search" placeholder="Search…" /></div>
+      <div class="grid" id="grid"></div>
+    </main>
+
+    <div id="modal" class="hidden" tabindex="-1"><div class="modal-content"></div></div>
+
+    <script>
+      /* ----------------------------- DATA -------------------------------- */
+      const fullData = {
+        peptides: [
+              // ---- GLP‑1 / Fat‑loss Peptides ----
+    {
+      name: "Semaglutide",
+      dose: "0.25–2.4 mg SC once weekly",
+      pros: "Powerful appetite suppression; 10–15 % mean weight‑loss in STEP trials; lowers SBP & CRP; cardioprotective data in T2DM",
+      cons: "Dose‑dependent nausea/vomiting and constipation; risk of gall‑bladder disease and pancreatitis; expensive pens; contraindicated in medullary‑thyroid‑cancer family history",
+      details: "Long‑acting GLP‑1 receptor agonist → slows gastric emptying, increases hypothalamic satiety signalling, enhances glucose‑dependent insulin release, suppresses glucagon, and may improve endothelial NO production."
+    },
+    {
+      name: "Tirzepatide",
+      dose: "2.5–15 mg SC once weekly",
+      pros: "Superior weight‑loss (‑22 % in SURMOUNT‑1); HbA1c −2.1 %; improves lipid profile; once‑weekly",
+      cons: "GI intolerance during escalation; injectable pen cost; limited real‑world cardiovascular‑outcome data so far",
+      details: "Dual agonist at GIP and GLP‑1 receptors. GIP component blunts GLP‑1‑induced nausea while further potentiating β‑cell insulinotropic signalling and adipocyte lipolysis."
+    },
+    {
+      name: "Retatrutide",
+      dose: "1–12 mg SC once weekly (phase‑2)",
+      pros: "Up to −24 % body‑weight at 48 wk (highest yet); improves liver fat",
+      cons: "Investigational; unknown long‑term safety; significant GI AEs in top doses",
+      details: "Triple agonist (GLP‑1, GIP, and glucagon‑R). Glucagon activity increases energy expenditure & hepatic lipid oxidation, amplifying GIP/GLP‑1 satiety."
+    },
+    {
+      name: "Survodutide (BI456906)",
+      dose: "0.6–3 mg SC weekly (phase‑2)",
+      pros: "Raises resting energy expenditure; meaningful hepatic steatosis reduction",
+      cons: "Still early‑phase; transient nausea; injection‑site reactions",
+      details: "GLP‑1/glucagon dual agonist – balances appetite reduction with glucagon‑mediated thermogenesis, potentially avoiding adaptive metabolic slowdown."
+    },
+    {
+      name: "AOD‑9604 (hGH frag 176‑191)",
+      dose: "300–600 mcg SC daily, fasted",
+      pros: "Selective lipolysis in visceral & subcutaneous fat; does not raise IGF‑1 or glucose; minimal water retention",
+      cons: "Modest solo efficacy; requires calorie control; few human RCTs",
+      details: "C‑terminal 16‑aa fragment of hGH activates β‑adrenergic/AMPK pathways in adipocytes → up‑regulates HSL & ATGL without GH/IGF‑1 anabolic signalling."
+    },
+    {
+      name: "Mazdutide (LY3502970)",
+      dose: "2–6 mg SC once weekly (China phase‑3)",
+      pros: "Lower early nausea vs semaglutide; oral tablet version in trials; significant HbA1c drop",
+      cons: "Not yet marketed; long‑term CV data lacking",
+      details: "Biased GLP‑1R agonist with hepato‑preferential signalling, aiming to maximise metabolic effect while reducing emesis‑trigger pathways."
+    },
+    {
+      name: "Cagrilintide (AMG‑133)",
+      dose: "0.3–2.4 mg SC once weekly",
+      pros: "Amylin analogue gives potent satiety; slows gastric emptying; additive with semaglutide in phase‑2",
+      cons: "Transient nausea; mild injection‑site erythema; regulatory filing pending",
+      details: "Long‑acting acylated amylin mimetic binds AMY1/3 receptors → reduces meal size, increases post‑prandial glycosuria, and modulates reward pathways."
+    },
+
+    // ---- Muscle‑gain Peptides ----
+    {
+      name: "IGF‑1 LR3",
+      dose: "40–100 mcg SC/IM post‑workout 3–5×/wk",
+      pros: "Satellite‑cell activation & myoblast proliferation; nutrient‑partitioning; low water retention vs GH",
+      cons: "Hypoglycaemia if mis‑timed; theoretical tumour‑promotion; costly",
+      details: "Long‑R3 isoform has 3× lower IGF‑BP affinity than native IGF‑1 → greater tissue penetration and sustained activation of IGF‑1R/PI3K‑Akt‑mTOR signalling for hypertrophy."
+    },
+    {
+      name: "IGF‑DES (1‑3)",
+      dose: "20–40 mcg IM directly into target muscle pre‑WO",
+      pros: "Localized hyperplasia; rapid onset; minimal systemic IGF‑BP sequestration",
+      cons: "<10 min serum half‑life; requires multiple micro‑injections; cancer risk unknown",
+      details: "N‑terminally truncated IGF variant avoids IGF‑BP binding, providing a transient high‑potency pulse that strongly activates p70S6K and MyoD in injected fibres."
+    },
+    {
+      name: "Follistatin‑344/315",
+      dose: "100–300 mcg IM weekly (gene therapy or peptide)",
+      pros: "Potent myostatin & activin‑A blockade; increases lean mass; may improve insulin sensitivity",
+      cons: "Cardiac/splanchic muscle hypertrophy at high doses; limited controlled human data; pricey",
+      details: "Follistatin binds and neutralises myostatin (GDF‑8) & activins → derepressing SMAD2/3 inhibition of mTOR, thereby accelerating muscle protein synthesis and satellite‑cell proliferation."
+    },
+    {
+      name: "GDF‑8 neutralising Ab",
+      dose: "1 mg/kg IV q4w (animal/early human)",
+      pros: "Direct myostatin blockade yields sizeable lean‑mass gain; once‑monthly dosing",
+      cons: "Experimental; may cause nose/throat oedema and ↑BK; very expensive biologic",
+      details: "Fully human monoclonal antibody sequesters circulating myostatin, preventing receptor binding on myocytes; downstream ↑ Akt/mTOR and ↓ ubiquitin–proteasome atrophy genes."
+    },
+
+    // ---- Regeneration ----
+    {
+      name: "BPC‑157",
+      dose: "200–500 mcg SC near injury or oral 10 mcg/kg daily",
+      pros: "Accelerates tendon, ligament & gut mucosa healing; angiogenic; NSAID‑gut protection",
+      cons: "Mostly rodent data; quality‑control issues in grey‑market vials",
+      details: "Pentadecapeptide derived from human gastric juice. Modulates FAK/paxillin and VEGFR2 signalling → enhances fibroblast migration, collagen type‑III deposition, and nitric‑oxide mediated vasodilation."
+    },
+    {
+      name: "TB‑500 (Thymosin‑β4)",
+      dose: "2–2.5 mg SC twice weekly loading ×4 wk, then monthly",
+      pros: "Broad cytoprotective & anti‑inflammatory effects; mobilises actin; useful post‑myocardial‑infarct in animals",
+      cons: "Post‑injection lethargy; transient drop in appetite; equivocal human data",
+      details: "Synthetic β4 chain peptide binds G‑actin → up‑regulates ILK/Akt, encourages endothelial progenitor cell migration and keratinocyte re‑epithelialisation."
+    },
+    {
+      name: "GHK‑Cu (Tripeptide‑1‑Cu)",
+      dose: "5 mg SC weekly or 1 % topical nightly",
+      pros: "Stimulates type‑III collagen & decorin; antioxidant gene up‑regulation; skin firmness and hair density↑",
+      cons: "Copper dyshomeostasis if excessive; blue/green skin tinge rare",
+      details: "Naturally occurring copper‑binding tripeptide. Activates metalloproteinases and TGF‑β1, while delivering bioavailable Cu²⁺ needed for lysyl‑oxidase cross‑linking of collagen/elastin."
+    },
+    {
+      name: "LL‑37 (Cathelicidin)",
+      dose: "100 mcg SC daily ×14 d (or topical 0.5 %)",
+      pros: "Broad‑spectrum antimicrobial & antiviral (incl. enveloped viruses); disrupts biofilms; promotes angiogenesis",
+      cons: "Local erythema/burning; may exacerbate psoriatic lesions at high levels",
+      details: "Cationic host‑defense peptide that forms membrane pores in microbes and chemo‑attracts immune cells via FPR2."
+    },
+    {
+      name: "Thymosin α1",
+      dose: "1.6 mg SC twice weekly ×6 wk",
+      pros: "Restores CD4/CD8 ratio; enhances vaccine titres; decreases viral load in hepatitis/COVID studies",
+      cons: "Sparse performance‑enhancement data; bruising at site",
+      details: "28‑aa thymic peptide that potentiates TLR‑4/MyD88 signalling, leading to improved dendritic‑cell antigen presentation and IL‑2 driven T‑cell proliferation."
+    },
+    {
+      name: "Thymalin (Thymus‑extract)",
+      dose: "10 mg IM daily ×10 d",
+      pros: "Reverses immunosenescence biomarkers; may increase telomere length; inexpensive",
+      cons: "Crude extract variability; evidence mostly Russian‑language trials",
+      details: "Complex of thymic peptides (thymosin fraction 5) thought to modulate expression of CD95/Fas and normalise thymopoiesis in aged subjects."
+    },
+
+    // ---- Immunomodulatory & Anti‑inflammatory ----
+    {
+      name: "KPV (Lys‑Pro‑Val)",
+      dose: "0.5–1 mg SC BID or 1 % topical",
+      pros: "Potent NF‑κB inhibition; alleviates colitis & atopic dermatitis; minimal systemic effects",
+      cons: "Very short half‑life; limited human trials; bitter taste if oral",
+      details: "C‑terminal tripeptide of α‑MSH binds MC1/MC3 receptors → suppresses TNF‑α, IL‑1β and reactive oxygen species, thereby dampening innate immune over‑activation."
+    },
+
+    // ---- GH Secretagogues ----
+    {
+      name: "Hexarelin (Examorelin)",
+      dose: "1–2 mcg/kg SC once daily or 100 mcg pre‑sleep",
+      pros: "Highest GH pulse among GHRPs; improves LV ejection fraction post‑MI; fairly cheap",
+      cons: "Rapid desensitisation (≤2 wk); increases prolactin & cortisol; appetite spikes",
+      details: "Ghrelin‑mimetic peptide activates GHS‑R1a on pituitary and hypothalamus, triggering large pulsatile GH and downstream IGF‑1 release."
+    },
+    {
+      name: "Tesamorelin (Egrifta)",
+      dose: "2 mg SC nightly",
+      pros: "FDA‑approved for HIV lipodystrophy; visceral fat ↓18 %; minimal desensitisation; improves lipid profile",
+      cons: "Injection‑site erythema; contraindicated in pregnancy; costly Rx",
+      details: "Stabilised GHRH(1‑44) analogue with N‑terminal trans‑3‑hexenoyl group that confers resistance to DPP‑IV cleavage, producing physiologic pulsatile GH/IGF‑1 rise without affecting cortisol."
+    },
+
+    // ---- Reproductive / Fertility ----
+    {
+      name: "HMG (Human Menopausal Gonadotropin)",
+      dose: "75–150 IU IM or SC three times weekly",
+      pros: "Contains both FSH & LH bioactivity; stimulates spermatogenesis and intratesticular testosterone; useful after AAS or in hypogonadotropic hypogonadism",
+      cons: "Injection pain; potential gynecomastia via estradiol; expensive urinary‑derived product",
+      details: "Purified from post‑menopausal urine; FSH component drives Sertoli‑cell maturation & ABP synthesis, while LH fraction activates Leydig‑cell cAMP to produce testosterone."
+    },
+    {
+      name: "Kisspeptin‑10 (KP‑10)",
+      dose: "100–200 mcg SC three times weekly",
+      pros: "Physiologic GnRH/LH/FSH pulse without receptor down‑regulation; may restore endogenous T production post‑cycle",
+      cons: "Flushing and warmth; very short systemic half‑life; still experimental for males",
+      details: "Binds KISS1R (GPR54) on hypothalamic neurons → triggers pulsatile GnRH secretion, which cascades to pituitary LH/FSH release maintaining Leydig/Sertoli function."
+    },
+
+    // ---- Nootropics & Anti‑Aging ----
+    {
+      name: "Glutathione (IV)",
+      dose: "600–1200 mg IV push weekly or 200 mg IM",
+      pros: "Master intracellular antioxidant; recycles other antioxidants; may lighten hyperpigmentation; protects hepatic paracetamol overload",
+      cons: "Warmth/flush during IV; sulphite‑sensitive asthma exacerbation rare; short plasma half‑life",
+      details: "Tripeptide γ‑Glu‑Cys‑Gly serving as cofactor for glutathione peroxidase and conjugating xenobiotics via GST, thus lowering ROS and inflammatory signalling."
+    },
+    {
+      name: "Cerebrolysin",
+      dose: "5 mL IV daily ×10–20 d (or 30 mL high dose)",
+      pros: "Contains BDNF‑like peptides; improves stroke recovery & cognitive function in dementia trials; crosses BBB",
+      cons: "Premium cost; fishy odour; daily IV/IM required",
+      details: "Porcine brain‑derived 10 kDa peptide mixture up‑regulates neurotrophic factors, reduces excitotoxicity, and promotes synaptic sprouting."
+    },
+    {
+      name: "Epithalon (Epitalon)",
+      dose: "5–10 mg SC nightly ×10–20 d, repeated semi‑annually",
+      pros: "Activates telomerase in somatic cells; normalises pineal melatonin; improves sleep latency",
+      cons: "Costly; very limited western human data; theoretical tumour risk debated",
+      details: "Tetrapeptide Ala‑Glu‑Asp‑Gly assumed to modulate expression of TERT and pineal clock genes, thereby restoring circadian homeostasis and telomere length in aged primates."
+    },
+    {
+      name: "MOTS‑c",
+      dose: "10–15 mg SC three times weekly or peri‑exercise",
+      pros: "Mitochondrial‑encoded peptide ↑ AMPK & PGC‑1α; enhances insulin‑sensitivity; improves endurance capacity",
+      cons: "Transient hypoglycaemia if fasting; scarce human‑phase data",
+      details: "Activates folate‑AICAR pathway and AMPK, promoting fatty‑acid oxidation and mitochondrial biogenesis while reducing adiposity in rodents."
+    },
+    {
+      name: "FOXO4‑DRI",
+      dose: "~0.1 mg/kg IV weekly ×4",
+      pros: "Selective senescent‑cell apoptosis; alleviates chemotherapy‑induced fatigue in mice",
+      cons: "Experimental; possible off‑target cachexia; synthesis complexity",
+      details: "Dominant‑negative FOXO4 peptide prevents p53 nuclear retention in senescent cells, causing intrinsic apoptosis and reducing SASP factors."
+    },
+    {
+      name: "Melatonin (IV bolus)",
+      dose: "10–20 mg IV pre‑op or 3–10 mg oral nightly",
+      pros: "Potent antioxidant & free‑radical scavenger; improves sleep onset and PER gene alignment; opioid‑sparing pre‑med",
+      cons: "Morning grogginess; vivid dreams; lowers core temp",
+      details: "Indoleamine produced by pineal gland; binds MT1/MT2 GPCRs regulating SCN circadian rhythms and up‑regulates Nrf2 antioxidant response element genes."
+    },
+    {
+      name: "NAD⁺ / NMN",
+      dose: "250–500 mg IV slow push or 250–500 mg oral NMN daily",
+      pros: "Boosts sirtuin & PARP activity; improves mitochondrial function; may enhance endurance",
+      cons: "Warmth/flush during IV; efficacy of oral forms debated; pricey",
+      details: "Rate‑limiting substrate for SIRT1‑mediated deacetylation of PGC‑1α and DNA‑damage repair enzymes; IV bypasses CD38 ectonucleotidase degradation."
+    },
+    {
+      name: "SS‑31 (Elamipretide)",
+      dose: "5 mg SC daily or 0.1 mg/kg IV",
+      pros: "Targets cardiolipin on inner mitochondrial membrane; lowers ROS; improves heart failure 6‑MWT",
+      cons: "Transient injection‑site rash/pruritus; long‑term data pending",
+      details: "Tetrapeptide aromatically cationic (D‑Arg‑Dmt‑Lys‑Phe‑NH2) that penetrates mitochondria and stabilises cardiolipin–cytochrome‑c interactions, preserving electron‑transport efficiency."
+    },
+    {
+      name: "Snap‑8 (Acetyl Octapeptide‑3)",
+      dose: "Topical 3–10 % BID",
+      pros: "Topical ‘botox‑like’ wrinkle attenuation; reduces catecholamine release at NMJ; non‑invasive",
+      cons: "Variable skin penetration; effect subtle vs botulinum toxin",
+      details: "Targets SNAP‑25 N‑terminal domain, competitively inhibiting SNARE complex assembly and thus attenuating Ca²⁺‑dependent acetylcholine vesicle release in facial muscles."
+    },
+    {
+      name: "Ara‑290 (Cibinetide)",
+      dose: "4 mg SC daily ×14 d (neuropathy) or 1 mg BID ocular",
+      pros: "Erythropoietin‑derived tissue‑protective peptide; alleviates painful diabetic neuropathy and sarcoidosis fatigue; non‑erythropoietic",
+      cons: "High cost; transient orthostatic dizziness",
+      details: "Helix‑B surface peptide of EPO activates EPOR‑CD131 heteroreceptor → JAK2/PI3K signalling that suppresses NF‑κB, reducing microglial inflammation and neuropathic pain."
+    },
+
+    // ---- Mood / Libido ----
+    {
+      name: "Selank",
+      dose: "250–400 mcg intranasal TID or 40 mcg/kg SC",
+      pros: "Anxiolytic equal to diazepam in trials; enhances BDNF; minimal sedation",
+      cons: "Drip aftertaste; short duration; limited availability outside CIS",
+      details: "Heptapeptide tuftsin analogue modulates GABA‑A subunits and stabilises enkephalin degradation, enhancing inhibitory neurotransmission and immune homeostasis."
+    },
+    {
+      name: "Semax",
+      dose: "300–600 mcg intranasal BID (or 100 mcg/kg SC)",
+      pros: "Nootropic & antidepressant via ACTH(4‑10) fragment; increases attention & working memory; neuroprotective",
+      cons: "Elevates BP in uncontrolled hypertension; bitter drip",
+      details: "Stimulates adenylyl cyclase and increases BDNF, NGF, and VEGF expression in hippocampus, countering ischemic oxidative stress."
+    },
+    {
+      name: "PT‑141 (Bremelanotide)",
+      dose: "1.25–2.5 mg SC 30–45 min pre‑intercourse",
+      pros: "FDA‑approved for hypoactive sexual desire in women; central melanocortin activation independent of NO; boosts male erections even with neuropathy",
+      cons: "Facial flushing, transient hypertension, nausea in 20 %; melanocortin skin darkening with chronic use",
+      details: "MC4R agonist acting in hypothalamic medial pre‑optic area → enhances dopaminergic sexual motivation circuitry without affecting systemic vasculature."
+    },
+    {
+      name: "Oxytocin (intranasal)",
+      dose: "24 IU intranasal 15 min pre‑social interaction",
+      pros: "Enhances trust, bonding & orgasm intensity; may aid ASD social cues",
+      cons: "Very short CNS half‑life; variable absorption; possible hyponatraemia if IV",
+      details: "Pituitary nonapeptide that activates OXTR‑coupled PLC/IP3 signalling in amygdala and nucleus accumbens, reducing fear responses and increasing social salience."
+    },
+
+    // ---- Hormone & Metabolic ----
+    {
+      name: "Insulin (rapid‑acting)",
+      dose: "2–10 IU SC pre/post‑workout with 1 g/kg carbs",
+      pros: "Most potent anabolic for glycogen & amino‑acid uptake; synergistic with IGF‑1/GH; anti‑catabolic",
+      cons: "Severe hypoglycaemia risk; requires precise carb timing; may promote fat storage if surplus",
+      details: "Binds insulin receptor tyrosine‑kinase, activating PI3K‑Akt for GLUT4 translocation and mTOR‑mediated protein synthesis, while inhibiting FoxO‑driven proteolysis."
+    },
+    {
+      name: "hCG (Human Chorionic Gonadotropin)",
+      dose: "250–500 IU SC 2–3×/wk or 1,000 IU after AAS cycle",
+      pros: "Mimics LH to maintain testicular size & intratesticular testosterone; supports fertility during TRT; stimulates pregnenolone back‑filling",
+      cons: "Estradiol rise→gynecomastia risk; desensitisation if abused; possible mood swings",
+      details: "Glycoprotein hormone binds LH‑CG receptor (Gs) on Leydig cells → activates cAMP/PKA → cholesterol side‑chain cleavage and testosterone production."
+    },
+    {
+      name: "EPO‑α (Erythropoietin)",
+      dose: "50 IU/kg SC three times weekly (cycling doping) or 4,000 IU TIW clinically",
+      pros: "Increases RBC mass & VO₂max; neuroprotective; reduces oxidative stress in kidneys",
+      cons: "Polycythaemia → ↑blood viscosity & thrombosis; hypertension; costly",
+      details: "Cytokine binds EPOR on erythroid progenitors → JAK2/STAT5 phosphorylation leading to survival & maturation; also activates PI3K‑Akt in other tissues."
+    },
+    {
+      name: "5‑Amino‑1‑MQ",
+      dose: "50–100 mg oral daily",
+      pros: "Inhibits NNMT → boosts NAD⁺ & lipolysis; enhances exercise capacity in mice",
+      cons: "Limited human pharmacokinetic data; possible MAO cross‑interaction",
+      details: "Blocks nicotinamide N‑methyltransferase in white fat, conserving nicotinamide for NAD⁺ salvage and increasing SIRT1‑mediated metabolic rate."
+    },
+    {
+      name: "AICAR",
+      dose: "50 mg oral daily (athletic) or 10 mg/kg IV AMI trial",
+      pros: "Direct AMPK activator; improves glucose uptake & endurance adaptation even at rest",
+      cons: "Cardiac hypertrophy at megadose; banned in sport (WADA); renal excretion saturation",
+      details: "Monophosphorylated adenosine analogue (ZMP) mimics AMP, allosterically activating AMPK, up‑regulating GLUT4 and PGC‑1α independent of muscle contraction."
+    },
+// ---- Additional Secretagogues & Recovery ----
+{name:"Sermorelin",dose:"100–300 mcg SC pre-sleep 5×/wk",pros:"Physiologic GHRH pulse; minimal desensitisation; affordable",cons:"Modest IGF-1 rise; daily injection",details:"GHRH(1-29) activates pituitary somatotrophs via cAMP/PKA, replicating endogenous GH burst."},
+{name:"Ipamorelin",dose:"300 mcg SC 30 min pre-sleep",pros:"Selective GH release without cortisol/prolactin rise; better sleep depth",cons:"Requires fasting; slight water retention",details:"Pentapeptide GHS-R agonist triggers transient GH pulse with minimal orexigenic effect."},
+{name:"GHRP-2",dose:"100 mcg SC 3×/day",pros:"Robust GH spikes; inexpensive",cons:"↑ prolactin/cortisol; appetite spikes; quick desensitisation",details:"Hexapeptide ghrelin analogue binds GHS-R1a, mobilising calcium to drive somatotroph exocytosis."},
+{name:"GHRP-6",dose:"150 mcg SC 3×/day",pros:"Strong GH surge plus appetite stimulation—good for bulking",cons:"Pronounced hunger; ↑ prolactin/cortisol",details:"GHS-R1a agonist boosting GH and activating hypothalamic NPY/AgRP neurons."},
+
+// ---- Additional Muscle Gain ----
+{name:"PEG-MGF",dose:"200–400 mcg IM post-workout 2×/wk",pros:"Extended-half-life MGF drives satellite-cell proliferation; local hyperplasia",cons:"Possible cardiac hypertrophy; injection swelling",details:"PEGylated IGF-1 Ec isoform prolongs ERK1/2 activation in mechanically-stressed fibres."},
+
+// ---- Sleep & Recovery ----
+{name:"DSIP",dose:"300 mcg SC 30 min pre-bed",pros:"Enhances delta sleep; lowers stress cortisol",cons:"Variable response; tolerance potential",details:"Nonapeptide modulates NMDA and 5-HT systems, facilitating slow-wave sleep."},
+
+// ---- Nootropic ----
+{name:"Dihexa",dose:"4–8 mg oral or 2 mg SC daily",pros:"Potent HGF-derived cognitive enhancer; promotes synaptogenesis",cons:"Limited human safety data; potential oncogenic risk via c-Met",details:"Heptapeptide mimetic of HGF that allosterically activates c-Met to increase dendritic spine density."},
+
+// ---- Additional GLP-1 Family ----
+{name:"Liraglutide",dose:"0.6–3.0 mg SC daily",pros:"Daily GLP-1 RA with proven CV benefit; ~8 % weight-loss",cons:"Daily shots; GI upset; thyroid C-cell warning",details:"Acylated GLP-1 analogue that slows gastric emptying and enhances glucose-dependent insulin."},
+{name:"Exendin-4",dose:"5–10 µg SC BID",pros:"Short-acting GLP-1 for post-prandial glucose control; modest weight-loss",cons:"BID injections; nausea; antibody formation",details:"Gila-monster GLP-1 mimetic resistant to DPP-IV; blunts glucagon and boosts insulin."},
+
+// ---- Immunomodulatory / Vascular ----
+{name:"VIP (Vasoactive Intestinal Peptide)",dose:"25 µg SC BID or intranasal",pros:"Potent vasodilator; relieves cluster headaches; Th1→Th2 shift",cons:"Flushing, hypotension; unstable in solution",details:"28-aa neuropeptide binds VPAC1/2, activating adenylate-cyclase to relax smooth muscle and dampen inflammation."},
+
+    // ---- Blends ----
+    {
+      name: "GLOW Blend (BPC‑157/TB‑500/GHK)",
+      dose: "SC daily (BPC‑157 5 mg + TB‑500 5 mg + GHK‑Cu 20 mg per vial)",
+      pros: "Synergistic wound, tendon & dermal healing; copper replenishment; reduced fibrosis",
+      cons: "Monitor serum copper/ceruloplasmin; cost of tri‑stack; possible cumulative fatigue",
+      details: "Combines angiogenic (TB‑500), fibro‑proliferative (BPC‑157) and collagen‑synthesis (GHK‑Cu) pathways for comprehensive tissue repair."
+    },
+    {
+      name: "BG37 Hair Blend",
+      dose: "300 mcg SC daily (BPC‑157 16 mg + GHK‑Cu 21 mg per vial)",
+      pros: "Increases dermal papilla vascularity & stem‑cell niche; DHT‑independent mechanism; minimal systemic sides",
+      cons: "Dermal fatigue with chronic use; blue scalp tint if Cu overload",
+      details: "GHK‑Cu up‑regulates VEGF in follicle bulge, while BPC‑157 counters perifollicular micro‑inflammation."
+    },
+    {
+      name: "BBG70 Post‑surgery Blend",
+      dose: "500 mcg SC EOD (BPC‑157 10 mg + TB‑500 10 mg + GHK‑Cu 50 mg per vial)",
+      pros: "Rapid collagen remodelling; reduced scar adhesions; pain relief",
+      cons: "Post‑injection lethargy; monitor copper; little RCT data",
+      details: "Higher‑dose copper peptide for robust collagen cross‑linking plus actin‑modulating TB‑500 to prevent keloid fibroplasia."
+    },
+    {
+      name: "CJC‑1295 + Ipamorelin",
+      dose: "100 mcg each SC 30 min pre‑sleep",
+      pros: "Physiologic pulsatile GH release; less cortisol/prolactin than GHRP‑6; improved deep sleep",
+      cons: "Requires nightly fast; water retention if carb surplus; small IGF‑1 rise vs exogenous GH",
+      details: "CJC‑1295 (GHRH analogue with DAC) provides prolonged GHRH tone, while Ipamorelin (GHS‑R agonist) triggers acute GH pulse – synergistic without amplifying desensitisation."
+    },
+    {
+      name: "MT‑2 / PT‑141 combo",
+      dose: "MT‑2 250 mcg SC EOD loading, plus PT‑141 1 mg SC PRN",
+      pros: "Concurrent melanogenesis for tanning and MC4R‑mediated libido; reduced UV exposure",
+      cons: "Nausea & facial flushing; hyperpigmented nevi; appetite suppression",
+      details: "MT‑2 acts on MC1R in melanocytes and MC4R centrally, while PT‑141 provides selective MC4R sexual arousal without MC1 coupling, giving dual cosmetic/libido benefits."
+    },
+
+    // ---- Experimental Others ----
+    {
+      name: "Adipotide (FTP‑P1)",
+      dose: "0.75–1.5 mg/kg SC daily ×28 d",
+      pros: "induces apoptosis of white‑fat endothelial cells → spot‑fat reduction; rodent weight‑loss 30 %",
+      cons: "Renal proximal‑tubule toxicity; injection pain; no human approval",
+      details: "Prohibitin‑binding peptide‑adipotide conjugate delivers pro‑apoptotic sequence to adipose vasculature, collapsing blood supply and triggering adipocyte necrosis."
+    },
+    {
+      name: "Gonadorelin",
+      dose: "250 mcg SC BID ×2 wk",
+      pros: "Physiologic LH/FSH release; diagnostic of pituitary reserve; short action",
+      cons: "Tachyphylaxis with >2 wk use; hot flushes; rarely arrhythmia",
+      details: "Synthetic GnRH analogue stimulates anterior pituitary via Gq/11 → PLC/IP3 → calcium‑mediated LH/FSH exocytosis."
+    },
+    {
+      name: "Triptorelin (GnRH super‑agonist)",
+      dose: "100 mcg IM one‑off or 3.75 mg depot",
+      pros: "Leydig‑cell ‘reset’ post‑AAS; treats prostate Ca & precocious puberty",
+      cons: "Initial testosterone flare; prolonged hypogonadism; mood swings",
+      details: "Potent GnRH agonist causes initial LH/FSH surge then receptor down‑regulation, leading to sustained suppression of gonadal steroids."
+    },
+    {name:"ACE-031 (ActRIIB-Fc)",dose:"3–10 mg SC q2 wk",pros:"Myostatin/activin trap yields rapid lean-mass gain",cons:"Bleeding gums/nose; halted trials; pricey",details:"Soluble activin-type IIB receptor–Fc fusion sequesters myostatin & activins, lifting SMAD-mediated suppression of mTOR."},
+{name:"Apelin-13",dose:"10 mcg SC peri-workout",pros:"Improves cardiac output & glucose uptake; vasodilatory",cons:"Hypotension; very short half-life",details:"Binds APJ receptor, activating PI3K/Akt/eNOS in endothelium and boosting AMPK in muscle."},
+{name:"Angiotensin (1-7)",dose:"1 mg SC daily",pros:"Vasodilatory & anti-fibrotic; counters Ang-II",cons:"Hypotension; limited sport data",details:"Mas-R agonist increases NO and opposes TGF-β-driven fibrosis—improving endothelial function."},
+{name:"P21",dose:"5 mg SC every 3 days",pros:"Enhances memory & neurogenesis in rodents",cons:"Highly experimental; expensive synthesis",details:"Cerebrolysin-derived 11-mer up-regulates BDNF and synaptic plasticity in hippocampus."},
+{name:"Noopept (GVS-111)",dose:"10–30 mg oral BID",pros:"Fast-acting cognitive enhancer; ↑ BDNF/NGF",cons:"Headache, irritability at high dose",details:"N-acyl-prolylglycine derivative increases alpha/beta EEG activity and modulates glutamate signaling."},
+{name:"Pal-GHK",dose:"Topical 1–3 % daily",pros:"Collagen I/III synthesis; skin firmness",cons:"Mild irritation possible",details:"Palmitoylated GHK boosts dermal penetration and stimulates TGF-β-mediated ECM production."},
+{name:"Pal-Tripeptide-38 (Matrixyl Synthe 6)",dose:"Topical 2.5 % daily",pros:"Boosts six key dermal matrix proteins; wrinkle depth ↓",cons:"Cosmetic-grade evidence only",details:"Matrikine that stimulates collagen I/III/IV, fibronectin, hyaluronic-acid synthase, and laminin-5."},
+{name:"TB4 Fragment (TB4-Frag)",dose:"0.5 mg SC weekly",pros:"Focused wound-repair without full systemic TB4",cons:"Limited studies; expensive",details:"17-aa active region of thymosin-β4 retains actin-sequestering and ILK activation for tissue repair."}
+
+        ],
+        aas:[
+          // --- Injectable Base & Others ---
+       /* ---- Depot Testosterone esters --------------------------------------- */
+  {
+    name: "Testosterone Enanthate",
+    dose: "200–600 mg IM weekly",
+    pros: "Reliable mass builder; cheap; predictable blood levels",
+    cons: "Estradiol & hematocrit ↑; water retention; full HPTA shutdown",
+    details: "7-carbon ester gives ~4-5 d half-life—gold-standard ‘test base’ for bulks or TRT."
+  },
+  {
+    name: "Testosterone Cypionate",
+    dose: "200–600 mg IM weekly",
+    pros: "Near-identical to Enanthate; slightly smoother peak; US-script friendly",
+    cons: "Same E2 / HCT issues; thick oil can sting",
+    details: "8-carbon ester (t½ ≈5–6 d) preferred in North America for replacement therapy."
+  },
+  {
+    name: "Testosterone Propionate",
+    dose: "50–100 mg IM EOD",
+    pros: "Fast onset; easier exit before PCT; less bloat if diet tight",
+    cons: "EOD (or daily) injections; high PIP for many users",
+    details: "Short 2-carbon ester peaks within 24 h—popular in short pre-contest stacks."
+  },
+  {
+    name: "Testosterone Phenylpropionate",
+    dose: "100 mg IM every 3 d",
+    pros: "Middle ground between Prop and Enan; smooth levels",
+    cons: "Scarce supply; still ≥2 pins/wk",
+    details: "3-carbon phenyl ester clears in ~6 d—often part of Sustanon blends."
+  },
+  {
+    name: "Testosterone Suspension",
+    dose: "50–100 mg IM/SC pre-workout or daily",
+    pros: "Immediate serum spike; no ester weight; water-based (small volume)",
+    cons: "Very painful injections; volatile estradiol",
+    details: "Un-estered micro-crystals of free testosterone—favoured for meet-day strength hits."
+  },
+  {
+    name: "Testosterone Undecanoate (Nebido)",
+    dose: "750–1000 mg IM q8–12 wk (TRT) or 250 mg weekly (cycle)",
+    pros: "Ultra-stable T for months; few injections",
+    cons: "Impossible to ‘pull’ quickly if sides; 4 mL deep-glute shot",
+    details: "11-carbon ester (t½ ≈34 d) used in long-interval clinical TRT."
+  },
+
+  // ---------- Mixed-ester & blends ----------
+  {
+    name: "Sustanon / Multi-ester Test",
+    dose: "250–500 mg IM weekly (split)",
+    pros: "Early spike + long tail; covers missed shots well",
+    cons: "Short esters cause estradiol spikes; under-dosed UGL vials common",
+    details: "Blend of propionate, phenylpropionate, isocaproate and decanoate esters—once-weekly TRT in some regions."
+  },
+
+  // ---------- Boldenone family ----------
+  {
+    name: "Boldenone Undecylenate (Equipoise)",
+    dose: "300–600 mg IM weekly",
+    pros: "RBC & appetite ↑; steady, lean gains",
+    cons: "BP ↑ via thick blood; anxiety/sweats; long ester delays recovery",
+    details: "Δ-Test derivative with mild aromatization; 14-d half-life—popular in endurance or recomp phases."
+  },
+  {
+    name: "Boldenone Cypionate",
+    dose: "200–400 mg IM weekly",
+    pros: "Clears faster than Undecylenate; easier PCT timing",
+    cons: "Same BP / anxiety issues; less clinical data",
+    details: "8-carbon ester (~8 d t½) offers EQ-like effects but quicker off-ramp."
+  },
+
+  // ---------- DHT-based hardeners ----------
+  {
+    name: "Drostanolone Propionate (Masteron-P)",
+    dose: "100 mg IM EOD",
+    pros: "Hard, dry cosmetic finish; anti-estrogenic",
+    cons: "HDL ↓; androgenic hair loss if prone",
+    details: "Non-aromatizing DHT-derivative ideal for the final 6–8 weeks before stage or photoshoot."
+  },
+  {
+    name: "Drostanolone Enanthate (Masteron-E)",
+    dose: "200–400 mg IM weekly",
+    pros: "Same hardness with fewer injections; stacks well with Tren/Test",
+    cons: "HDL still suppressed; possible acne",
+    details: "6-d half-life version—favoured in 12-week cutting cycles."
+  },
+  {
+    name: "Primobolan (Metenolone Enanthate)",
+    dose: "400–800 mg IM weekly",
+    pros: "Lean, keepable gains; little BP/liver impact",
+    cons: "Very costly; often counterfeited",
+    details: "Mild DHT-family anabolic that neither aromatizes nor elevates progesterone—used for safe cruising or female prep."
+  },
+  {
+    name: "Methenolone Acetate (Oral Primo)",
+    dose: "50–100 mg oral daily",
+    pros: "Primo effect without needles; negligible liver stress",
+    cons: "Low bio-availability so pricey; counterfeit risk high",
+    details: "C-2 acetyl ester survives first-pass just long enough for moderate anabolic activity."
+  },
+
+  // ---------- Nandrolone family ----------
+  {
+    name: "Nandrolone Decanoate (Deca-Durabolin)",
+    dose: "200–400 mg IM weekly",
+    pros: "Joint relief; collagen synthesis ↑; big off-season mass",
+    cons: "Prolactin-mediated ED/gyno; 15-d half-life prolongs shutdown",
+    details: "19-nor that converts to DHN—not DHT—reducing scalp oils but raising prolactin."
+  },
+  {
+    name: "Nandrolone Phenylpropionate (NPP)",
+    dose: "200–350 mg IM weekly (split EOD)",
+    pros: "All Deca benefits with faster clearance; less water retention",
+    cons: "EOD pins; prolactin risk remains",
+    details: "4-d half-life ester—useful in shorter bulks or injury-healing stacks."
+  },
+  {
+    name: "Nandrolone Undecanoate",
+    dose: "300–400 mg IM every 2 wk",
+    pros: "Infrequent shots; therapeutic use for anemia/osteoporosis",
+    cons: "Shutdown lasts months; scant bodybuilding data",
+    details: "21-carbon ester gives ultra-long profile similar to Nebido but for nandrolone."
+  },
+
+  // ---------- Dihydroboldenone ----------
+  {
+    name: "DHB (Dihydroboldenone Cypionate)",
+    dose: "200–400 mg IM weekly",
+    pros: "Oral-like strength & vascularity; dry gains",
+    cons: "Brutal PIP; limited human research",
+    details: "5-α-reduced EQ analogue—non-aromatizing but strongly anabolic via AR/ERK crosstalk."
+  },
+
+  // ---------- Trenbolone family ----------
+  {
+    name: "Trenbolone Acetate",
+    dose: "300–450 mg IM weekly (75–100 mg EOD)",
+    pros: "Unmatched strength & recomposition; clears fast if sides",
+    cons: "Night sweats, anxiety; BP ↑↑; prolactin gyno",
+    details: "19-nor binding AR & GR with equal zeal—raises IGF-1 and nutrient partitioning drastically."
+  },
+  {
+    name: "Trenbolone Enanthate",
+    dose: "200–400 mg IM weekly",
+    pros: "Fewer injections; steady plasma levels",
+    cons: "Sides linger 1-2 weeks after cessation",
+    details: "7-d half-life ester—requires seasoned users who tolerate Tren sides."
+  },
+  {
+    name: "Trenbolone Hex (Parabolan)",
+    dose: "200–300 mg IM weekly",
+    pros: "Convenient dosing; potent contest hardener",
+    cons: "Expensive & often faked; side-effects prolonged",
+    details: "Hexahydrobenzylcarbonate ester (~10 d t½) historically used in French medicine."
+  },
+  {
+    name: "Trenbolone Suspension",
+    dose: "30–50 mg IM pre-workout",
+    pros: "Explosive aggression & CNS drive; 24-h detection window",
+    cons: "Painful jab; acute side-storm",
+    details: "Un-estered Tren for meet-day strength peaks or final-week drying."
+  },
+  {
+    name: "Tri-Tren Blend",
+    dose: "≈200 mg IM weekly",
+    pros: "Full spectrum of short-/mid-/long Tren esters in one vial",
+    cons: "Impossible to titrate precisely; lab variability",
+    details: "Mix of acetate, enanthate & hex designed to ‘flatten’ Tren serum curve, mostly a marketing gimmick."
+  },
+
+  // ---------- Trestolone ----------
+  {
+    name: "Trestolone Acetate (MENT)",
+    dose: "25–50 mg IM daily",
+    pros: "Extremely potent mass gainer; works even without baseline Test",
+    cons: "Aromatizes 10× faster than Test → instant gyno; BP/HCT stress",
+    details: "19-nor that remains active without 5-α reduction—researched as potential male contraceptive."
+  },
+
+  // ---------- Oral 17-α-alkylated bulking agents ----------
+  {
+    name: "Methandienone (Dianabol)",
+    dose: "20–40 mg oral daily",
+    pros: "Rapid mass & strength; huge glycogen pump",
+    cons: "Bloat, BP ↑; hepatotoxic; HDL ↓",
+    details: "17-aa testosterone w/ strong aromatization—classic ‘kick-start’ for bulks."
+  },
+  {
+    name: "Oxymetholone (Anadrol)",
+    dose: "25–50 mg oral daily",
+    pros: "Extreme scale weight; appetite aid at low doses",
+    cons: "Kills appetite in some; HDL crash; liver stress",
+    details: "2-hydroxy DHT derivative causing mass even with low estrogen—mechanism partly prostaglandin-mediated."
+  },
+  {
+    name: "Stanozolol (Winstrol)",
+    dose: "30–50 mg oral daily (or 50 mg IM ED)",
+    pros: "Dry, grainy hardness; lowers SHBG",
+    cons: "HDL massacre; joint pain; androgenic hair loss",
+    details: "Non-aromatizing DHT analog used for sprint speed and stage conditioning."
+  },
+  {
+    name: "Oxandrolone (Anavar)",
+    dose: "25–50 mg oral daily",
+    pros: "Lean strength gains; mild on BP; female-friendly",
+    cons: "Expensive; HDL ↓; modest liver strain",
+    details: "7-α-methyl DHT derivative—excellent nitrogen retention with minimal androgenic sides."
+  },
+  {
+    name: "Turinabol (Oral-Tbol)",
+    dose: "30–40 mg oral daily",
+    pros: "Steady gains; no water bloat",
+    cons: "Liver & lipid strain; test suppression",
+    details: "Chlorinated Dbol that cannot aromatize—East German doping staple."
+  },
+  {
+    name: "Fluoxymesterone (Halotestin)",
+    dose: "10–20 mg 2–3 h pre-event",
+    pros: "CNS aggression & strength without weight gain",
+    cons: "Highly hepatotoxic; mood volatility; HDL single-digit territory",
+    details: "Potent AR agonist with very low anabolic : androgenic ratio—reserved for max-out day."
+  },
+  {
+    name: "Superdrol (Methasterone)",
+    dose: "20 mg oral daily (≤4 wk)",
+    pros: "Enormous strength & dry fullness",
+    cons: "HDL ⁓−50 %; AST/ALT spike; lethargy",
+    details: "Double-methylated DHT analog scoring off-the-chart anabolic numbers—short cycles only."
+  },
+  {
+    name: "Methyl-1-Testosterone (M1T)",
+    dose: "5–10 mg oral daily (2–3 wk)",
+    pros: "Potent mass burst at tiny dose",
+    cons: "Severe liver impact; BP ↑; lethargy",
+    details: "17-aa 1-dehydro Test—effectively ‘orally active Tren’ but with harsher toxicity."
+  },
+
+  // ---------- Designer orals ----------
+  {
+    name: "Epistane (Methylepitiostane)",
+    dose: "20–40 mg oral daily",
+    pros: "Dry recomp; mild BP impact; anti-estrogenic",
+    cons: "HDL ↓; liver stress if >30 mg",
+    details: "DHT derivative binding ERβ weakly—hardens physique while lowering SHBG."
+  },
+  {
+    name: "Dimethazine (DMZ)",
+    dose: "20–30 mg oral daily (4 wk)",
+    pros: "Strength comparable to Superdrol; moderately dry",
+    cons: "Double 17-aa → heavy liver load; limited research",
+    details: "‘Twin’ Superdrol molecule linked by diazene bridge—splits in vivo into two active methasterone moieties."
+  },
+  {
+    name: "Furazabol (Miotolan)",
+    dose: "20–40 mg oral daily",
+    pros: "Similar to Winny but friendlier lipids; subtle hardness",
+    cons: "Weak at low doses; rare supply",
+    details: "Stanozolol analog with hetero-aromatic ring believed to preserve HDL better."
+  },
+  {
+    name: "Methyltestosterone",
+    dose: "10–25 mg oral/sublingual pre-event",
+    pros: "Instant aggression & strength; cheap",
+    cons: "Gyno risk via aromatization; liver toxic; poor anabolic ratio",
+    details: "Plain Test with 17-aa—used historically by boxers for ‘edge’ before bouts."
+  }
+        ],
+        sarms:[
+         // --- 1. First-generation / well-known ---------------------------------
+  {
+    name: "RAD-140 (Testolone)",
+    dose: "10–20 mg oral daily",
+    pros: "Very high anabolic : androgenic ratio; size & strength gains; bone density ↑",
+    cons: "Liver-enzymes (ALT/AST) ↑; HDL ↓; full HPTA suppression at ≥10 mg",
+    details: "Tricyclic non-steroidal AR agonist with ~28 h half-life; shows 40× greater AR affinity than testosterone while sparing prostate in primate data."
+  },
+  {
+    name: "LGD-4033 (Ligandrol)",
+    dose: "5–10 mg oral daily",
+    pros: "Robust lean-mass & strength increase; good oral bio-availability",
+    cons: "Total/Free T ↓ 55–85 % after 3 wk; HDL ↓; mild SHBG drop",
+    details: "Pyrrolidine SARM (t½ ≈24 h) that added 1.5 kg LBM in a 21-day human study at only 1 mg/day."
+  },
+  {
+    name: "MK-2866 (Ostarine, Enobosarm)",
+    dose: "20–30 mg oral daily",
+    pros: "Mild anabolic with joint/ligament benefit; minimal BP/lipid impact",
+    cons: "HPTA suppression at >20 mg; mild ALT ↑ in some",
+    details: "Phase-III cancer-cachexia drug; 12-h half-life; lowest side-effect SARM for first-time users."
+  },
+  {
+    name: "S4 (Andarine)",
+    dose: "25–50 mg oral BID (split due to 4-h t½)",
+    pros: "Noticeable fat-loss hardness; strong AR binding; early contest prep favourite",
+    cons: "Night-vision tint (‘yellow filter’) & light adaptation delay; LDL ↑ at high dose",
+    details: "First-generation SARM originally for BPH; vision side-effect from partial agonism at retinal AR."
+  },
+
+  // --- 2. Higher-potency / 2nd-gen --------------------------------------
+  {
+    name: "LGD-3303",
+    dose: "10–15 mg oral daily",
+    pros: "Greater bone-anabolic potency than LGD-4033; may stack well with GH",
+    cons: "Limited human safety data; stronger suppression than LGD-4033",
+    details: "Tetrahydro-quinoline SARM whose demethylated metabolite maintains high AR affinity but minimal prostate stimulation in rat models."
+  },
+  {
+    name: "S23",
+    dose: "10–20 mg oral daily",
+    pros: "Very dry, hard look; candidate male contraceptive (zero sperm in rats)",
+    cons: "Severe suppression even at 10 mg; dark-brown urine possible; aggression spikes",
+    details: "Diaryl-propionamide SARM with AR-binding KD ≈1.7 nM (stronger than RAD-140); increases FSH/LH suppression dose-dependently."
+  },
+  {
+    name: "AC-262536",
+    dose: "15–30 mg oral daily",
+    pros: "Lean mass with *minimal* prostate weight gain; mild lipid impact",
+    cons: "Modest overall gains; short t½ (~6 h) → BID ideal",
+    details: "Indole-based partial agonist (60 % of DHT’s anabolic activity) engineered for osteoporosis but never advanced past animals."
+  },
+  {
+    name: "LGD-2226",
+    dose: "10–20 mg oral daily",
+    pros: "Long half-life (~13 h); good muscle retention during calorie deficit",
+    cons: "Not commercially available; preclinical only; liver enzymes ↑ in dogs",
+    details: "Triazolopyrimidine SARM with strong AR selectivity and 46 % oral bio-availability in canines."
+  },
+  {
+    name: "TLB-150 (RAD-150, Testolone-Benzoate)",
+    dose: "20–40 mg oral daily",
+    pros: "Esterified RAD-140 → longer half-life & steadier levels; less frequent dosing",
+    cons: "No formal toxicology; same liver/lipid issues as RAD; more expensive",
+    details: "Benzoate-ester prodrug hydrolyses in vivo to RAD-140, delivering a slower release curve similar to a short injectable ester."
+  },
+
+  // --- 3. Myostatin & hybrid agents ------------------------------------
+  {
+    name: "YK-11",
+    dose: "5–10 mg oral daily",
+    pros: "Up-regulates follistatin → myostatin blockade; very dry lean-mass look",
+    cons: "Steroidal structure means liver strain; scant human research; suppression",
+    details: "19-nor steroid that is a partial AR agonist and potent SMAD3 antagonist—combining SARM-like lean gains with myostatin inhibition."
+  },
+
+  // --- 4. Endurance / metabolic “SARM-adjacent” -------------------------
+  {
+    name: "GW-501516 (Cardarine)",
+    dose: "10–20 mg oral daily",
+    pros: "Endurance ↑; fatty-acid oxidation; HDL ↑, TG ↓",
+    cons: "High-dose rodent studies showed rapid GI tumour formation; WADA ban",
+    details: "Selective PPAR-δ agonist that up-regulates CPT-1 and oxidative type-I muscle fibers — *not* an AR modulator."
+  },
+  {
+    name: "SR9009 (Stenabolic)",
+    dose: "20–30 mg oral daily (split q4h)",
+    pros: "Increases basal metabolism & wakefulness; clock-gene alignment",
+    cons: "Very poor oral bio-availability; needs frequent dosing; efficacy debated",
+    details: "REV-ERBα/β agonist that boosts mitochondria count and shifts substrate usage toward lipids in mouse studies."
+  },
+  {
+    name: "MK-677 (Ibutamoren)",
+    dose: "10–25 mg oral nightly",
+    pros: "GH/IGF-1 ↑ 40–70 %; deeper REM sleep; joint healing support",
+    cons: "Water retention & appetite surge; mild insulin resistance; numb hands (CTS-like)",
+    details: "Non-peptide ghrelin mimetic (GHSR-1a agonist) that raises GH pulsatility for 24 h—often stacked with SARMs for synergistic growth."
+  }
+        ],
+        serms:[
+  {
+    name: "Arimidex (Anastrozole)",
+    dose: "0.25–0.5 mg oral EOD",
+    pros: "Non-steroidal AI; drops estradiol 70–80 % in hours",
+    cons: "HDL ↓; joint dryness; rebound E2 if stopped abruptly",
+    details: "Competitive CYP19A1 inhibitor used on-cycle to keep E2/bloat in range (ideal 20–35 pg/mL)."
+  },
+  {
+    name: "Letrozole",
+    dose: "0.25 mg oral E2D → titrate",
+    pros: "Strongest oral AI; crushes estrogen rapidly",
+    cons: "E2 crash → mood/libido loss; LDL ↑; bone de-mineralisation long-term",
+    details: "Triazole AI that can drop E2 below assay detection within 48 h — reserved for emergency gyno flare control."
+  },
+  {
+    name: "Exemestane (Aromasin)",
+    dose: "12.5 mg oral EOD",
+    pros: "Suicide (irreversible) AI; no rebound; mild androgenic boost",
+    cons: "Costly; HDL ↓; liver enzymes may rise",
+    details: "Steroidal AI binds aromatase covalently, permanently disabling the enzyme until new protein is synthesised."
+  },
+  {
+    name: "Formestane",
+    dose: "25 mg trans-dermal daily or 250 mg IM E3D",
+    pros: "OTC suicide AI gel; local lipolysis claims",
+    cons: "Skin irritation; weaker systemic effect than Exemestane",
+    details: "4-hydroxy-androstenedione converts to inactive 4-oxo metabolites, knocking out aromatase with minimal hepatic impact."
+  },
+
+  /* ---------------- SERMs (Selective ER Modulators) ----------- */
+  {
+    name: "Tamoxifen (Nolvadex)",
+    dose: "20 mg oral nightly",
+    pros: "Blocks breast-tissue ERα → gyno prevention & PCT staple",
+    cons: "Thrombo-embolism risk; hot flashes; lowers IGF-1",
+    details: "SERM acting as ER antagonist in breast yet agonist in liver & bone; kick-starts LH/FSH when long-esters are cleared."
+  },
+  {
+    name: "Clomiphene (Clomid)",
+    dose: "50 mg oral nightly then taper",
+    pros: "Powerful HPTA restart; raises LH/FSH 2- to 3-fold",
+    cons: "Visual tracers; mood swings; brain fog at 100 mg+",
+    details: "Mixture of zuclomiphene (long-acting) & enclomiphene (fast) that disinhibits GnRH by blocking estrogen feedback at the hypothalamus."
+  },
+  {
+    name: "Raloxifene (Evista)",
+    dose: "30–60 mg oral daily",
+    pros: "Superior gyno reversal vs Tamox; lowers LDL; bone density ↑",
+    cons: "Leg cramps; clot risk similar to Tamox",
+    details: "Second-gen SERM with stronger ER antagonism in breast but weaker hepatic estrogenicity—popular for pubertal gyno management."
+  },
+  {
+    name: "Toremifene (Fareston)",
+    dose: "60 mg oral daily",
+    pros: "Gentler on mood than Clomid; similar PCT efficacy",
+    cons: "Expensive; QT-interval prolongation possible",
+    details: "Chlorinated tamoxifen analog; raises LH/FSH without the visual distortions often seen with Clomid."
+  },
+
+  /* ---------------- 5-α-Reductase Inhibitors ------------------ */
+  {
+    name: "Finasteride",
+    dose: "1 mg oral daily (hair) / 5 mg (prostate)",
+    pros: "Cuts DHT ~65 %; slows androgenic alopecia; shrinks prostate",
+    cons: "Post-finasteride libido issues (rare); slight T ↑ may raise E2",
+    details: "Type-II 5-α-reductase blocker preventing T → DHT conversion in scalp & prostate."
+  },
+  {
+    name: "Dutasteride",
+    dose: "0.5 mg oral every other day",
+    pros: "Inhibits type-I & II isozymes → DHT ↓ 90 %",
+    cons: "Long t½ (5 wk) makes side-effects linger; PSA lab interference",
+    details: "Dual 5-AR inhibitor offering stronger scalp protection but slower wash-out than Finasteride."
+  },
+
+  /* ---------------- Prolactin Control ------------------------- */
+  {
+    name: "Cabergoline",
+    dose: "0.25 mg oral 2×/week",
+    pros: "Drops prolactin 60–80 %; combats ‘Deca/Tren dick’",
+    cons: "Orthostatic hypotension; nausea if taken empty stomach",
+    details: "D2 receptor agonist with 63-h half-life, restoring dopamine tone suppressed by 19-nor compounds."
+  },
+  {
+    name: "Pramipexole",
+    dose: "0.125 mg oral HS titrate to 0.5 mg",
+    pros: "Alternative for prolactin; improves REM sleep; antidepressant",
+    cons: "Compulsive behaviour (gambling); morning nausea",
+    details: "High-affinity D2/D3 agonist, shorter t½ than Caber—dose at night to leverage sedative effect."
+  },
+  {
+    name: "Bromocriptine",
+    dose: "2.5 mg oral QAM with food",
+    pros: "Cheap ergoline DA agonist; lowers prolactin & may aid fat-loss",
+    cons: "GI upset; dizziness; shorter action than Caber",
+    details: "Older D2 agonist that also activates α-adrenergic pathways increasing basal metabolic rate modestly."
+  },
+
+  /* ---------------- Sympathomimetic Fat-loss ------------------ */
+  {
+    name: "Clenbuterol",
+    dose: "20–120 µg oral (2-w on / 2-w off)",
+    pros: "Potent β2 agonist thermogenesis; mild anti-catabolic",
+    cons: "Tachycardia; cardiac hypertrophy long-term; tremors",
+    details: "Stimulates β2-adrenergic receptors raising cAMP and body-temperature ~0.5 °C; desensitises after ~14 d."
+  },
+  {
+    name: "Albuterol (Salbutamol)",
+    dose: "4–8 mg oral pre-workout or 2–4 mg TID",
+    pros: "Shorter half-life than Clen; less cardiac strain; legal inhaler",
+    cons: "Shakiness; potassium ↓; needs 3–4 daily doses",
+    details: "Rapid-acting β2 agonist giving 2–3 h thermogenic window—handy for fasted cardio."
+  },
+  {
+    name: "Ephedrine (ECA stack)",
+    dose: "25 mg + 200 mg caffeine TID (6 wk max)",
+    pros: "Synergistic β1/β2/β3 + caffeine ↑ NE; appetite suppression",
+    cons: "BP ↑; insomnia; receptor down-regulation",
+    details: "Mixed adrenergic agonist plus aspirin/caffeine boosting cAMP & norepinephrine—classic cutting staple before Clen popularity."
+  },
+  {
+    name: "Yohimbine HCl",
+    dose: "0.2 mg/kg oral fasted AM",
+    pros: "Alpha-2 antagonist targets stubborn hip/ab fat; libido ↑",
+    cons: "Anxiety/jitters; BP ↑ in non-fasted state",
+    details: "Blocks presynaptic α2 receptors, unleashing norepinephrine and blood-flow to adipose tissue—ineffective if insulin present."
+  },
+
+  /* ---------------- Thyroid & Mitochondrial -------------------- */
+  {
+    name: "T3 (Liothyronine)",
+    dose: "25–75 µg oral split BID",
+    pros: "Maximal metabolic rate ↑; synergistic with GH/Clen",
+    cons: "Muscle catabolism; arrhythmia if overshot; needs taper",
+    details: "Bioactive triiodothyronine bypasses T4→T3 conversion, accelerating ATP turnover and Na⁺/K⁺-ATPase activity."
+  },
+  {
+    name: "T4 (Levothyroxine)",
+    dose: "50–150 µg oral AM (empty stomach)",
+    pros: "Gentler metabolism lift; smoother serum curve; cheap",
+    cons: "Requires deiodinase conversion; slower onset",
+    details: "Pro-hormone thyroxine provides steady pool for tissue-specific T3 synthesis, often stacked with GH in long cuts."
+  },
+  {
+    name: "DNP (2,4-Dinitrophenol)",
+    dose: "200 mg oral daily ×10–14 d (ADVANCED ONLY)",
+    pros: "Fastest fat-loss (≈1 % body-wt/week) independent of diet",
+    cons: "Hyperthermia, cataracts, death if mis-dosed; profuse sweating",
+    details: "Mitochondrial proton-ionophore uncouples oxidative phosphorylation, forcing 50–60 % energy to dissipate as heat."
+  },
+
+  /* ---------------- Insulin-Sensitizers ------------------------ */
+  {
+    name: "Metformin",
+    dose: "500–1,000 mg oral BID with meals",
+    pros: "AMPK activation; lowers hepatic glucose output; may blunt AAS insulin-resistance",
+    cons: "GI upset; B12 depletion; lactic acidosis in renal failure",
+    details: "Biguanide that inhibits mitochondrial Complex-I raising AMP:ATP → AMPK, improving glucose disposal and lipid profile."
+  },
+  {
+    name: "Berberine",
+    dose: "500 mg oral TID",
+    pros: "Metformin-like fasting glucose drop; gut-health benefits",
+    cons: "GI cramp in some; CYP3A4 interactions",
+    details: "Plant isoquinoline alkaloid activates AMPK & increases GLP-1, serving as an OTC insulin-sensitizer during bulk phases."
+  },
+
+  /* ---------------- PDE-5 Inhibitors --------------------------- */
+  {
+    name: "Sildenafil (Viagra)",
+    dose: "25–100 mg oral PRN 30 min pre",
+    pros: "Restores erectile firmness; pulmonary vasodilation",
+    cons: "Headache; visual blue tint; BP ↓",
+    details: "Selective PDE-5 blocker raising cGMP in corpus cavernosum for 4–6 h."
+  },
+  {
+    name: "Tadalafil (Cialis)",
+    dose: "5–20 mg oral PRN or 5 mg daily",
+    pros: "36-h half-life (‘weekender’); mild BP support for Tren",
+    cons: "Back pain; nasal congestion; interacts with nitrates",
+    details: "Long-acting PDE-5 inhibitor also used at 5 mg ED to offset AAS-induced endothelial dysfunction."
+  },
+  {
+    name: "Vardenafil (Levitra)",
+    dose: "10–20 mg oral PRN",
+    pros: "Faster onset than Sildenafil; less visual disturbance",
+    cons: "Shorter duration (~5 h); dyspepsia",
+    details: "PDE-5 blocker with slightly higher PDE-6 selectivity, giving strong rigidity at lower dose in some men."
+  },
+  {
+    name: "Avanafil (Stendra)",
+    dose: "100–200 mg oral PRN (15 min pre)",
+    pros: "Quickest onset; fewer side-effects; food-independent",
+    cons: "Costly; shortest real-world track record",
+    details: "Next-gen PDE-5i reaching peak plasma in 30 min — convenient for spontaneous use."
+  }
+        ]
+      };
+
+      /* --------------------- INIT --------------------------- */
+      const params = new URLSearchParams(window.location.search);
+      let cat = params.get("type") || "peptides";
+      const title = document.getElementById("cat-title");
+      const grid = document.getElementById("grid");
+      const searchInput = document.getElementById("search");
+      const select = document.getElementById("category-select");
+      select.value = cat;
+
+      const render = () => {
+        grid.innerHTML = "";
+        title.textContent = cat.toUpperCase();
+        fullData[cat].forEach((c) => grid.appendChild(createCard(c)));
+        // Scroll reveal
+        document.querySelectorAll(".card").forEach((el) => observe(el));
+      };
+
+      const createCard = (c) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.name = c.name.toLowerCase();
+        card.innerHTML = `
+          <span class="tag">${c.dose}</span>
+          <h3>${c.name}</h3>
+          <p><strong>Pros:</strong>\n${c.pros}</p>
+          <p style="margin-top:0.6rem"><strong>Cons:</strong>\n${c.cons}</p>
+        `;
+        card.addEventListener("click", () => openModal(c));
+        return card;
+      };
+
+      select.addEventListener("change", (e) => {
+        cat = e.target.value;
+        history.replaceState({}, "", `?type=${cat}`);
+        render();
+      });
+
+      /* ---------------- SEARCH ---------------- */
+      searchInput.addEventListener("input", (e) => {
+        const q = e.target.value.toLowerCase();
+        grid.querySelectorAll(".card").forEach((card) => {
+          card.style.display = card.dataset.name.includes(q) ? "block" : "none";
+        });
+      });
+
+      /* ---------------- MODAL ---------------- */
+      const modal = document.getElementById("modal");
+      const modalContent = modal.querySelector(".modal-content");
+      const openModal = (compound) => {
+        modalContent.innerHTML = `
+          <button class="close-btn" aria-label="Close modal">×</button>
+          <h3>${compound.name}</h3>
+          <p><strong>Standard Dose:</strong> ${compound.dose}</p>
+          <p style="margin-top:0.9rem;white-space:pre-line;"><strong>Pros:</strong>\n${compound.pros}</p>
+          <p style="margin-top:0.9rem;white-space:pre-line;"><strong>Cons:</strong>\n${compound.cons}</p>
+          ${compound.details ? `<p style="margin-top:0.9rem;white-space:pre-line;">${compound.details}</p>` : ""}
+        `;
+        modal.classList.add("active");
+        modal.classList.remove("hidden");
+        modalContent.querySelector(".close-btn").addEventListener("click", closeModal);
+      };
+      const closeModal = () => {
+        modal.classList.remove("active");
+        setTimeout(() => modal.classList.add("hidden"), 300);
+      };
+      modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("active")) closeModal(); });
+
+      /* -------------- Scroll Reveal ------------- */
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("show");
+          obs.unobserve(entry.target);
+        });
+      }, {threshold:0.15});
+      const observe = (el) => observer.observe(el);
+
+      render();
+    </script>
+  </body>
+</html>

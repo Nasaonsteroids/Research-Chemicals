@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SERM & Ancillary Library</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #0e0f11;
+        --card: rgba(255, 255, 255, 0.04);
+        --card-glow: rgba(0, 255, 204, 0.35);
+        --accent: #00ffd0;
+        --text: #eef3f7;
+        --text-dim: #8392a7;
+        --radius: 1.25rem;
+        --transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+      }
+      *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:"Inter",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+      header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;max-width:1200px;margin:0 auto}
+      a.logo{color:var(--text);font-weight:700;text-decoration:none}
+      main{max-width:1200px;margin:0 auto;padding:2.5rem 1.5rem}
+      h1{font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:1.75rem;position:relative}
+      h1::after{content:"";position:absolute;bottom:-6px;left:0;width:64px;height:3px;background:var(--accent);border-radius:2px}
+      .search-bar{width:100%;max-width:560px;margin:0 auto 2.2rem}
+      .search-bar input{width:100%;padding:0.85rem 1rem;background:var(--card);border:1px solid transparent;border-radius:var(--radius);color:var(--text);font-size:1rem;transition:border 0.3s ease}
+      .search-bar input:focus{outline:none;border-color:var(--accent)}
+      .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.5rem}
+      .card{background:var(--card);backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:1.5rem;position:relative;overflow:hidden;transform:translateY(20px);opacity:0;transition:var(--transition);cursor:pointer}
+      .card.show{transform:none;opacity:1}
+      .card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,var(--card-glow) 0%,transparent 60%);opacity:0;transition:opacity 0.4s ease}
+      .card:hover::before{opacity:1}
+      .card h3{font-size:1.1rem;margin-bottom:0.35rem}
+      .tag{display:inline-block;font-size:0.75rem;background:var(--accent);color:#000814;padding:2px 6px;border-radius:4px;font-weight:600;margin-bottom:0.9rem}
+      .card p{font-size:0.88rem;color:var(--text-dim);white-space:pre-line}
+      /* modal */
+      .hidden{display:none !important}
+      #modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:flex;justify-content:center;align-items:center;padding:1.5rem;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.4s ease}
+      #modal.active{opacity:1;pointer-events:all}
+      .modal-content{background:var(--card);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);max-width:540px;width:100%;padding:2rem 1.75rem;position:relative;animation:fadeUp 0.45s ease}
+      @keyframes fadeUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+      .modal-content h3{margin-bottom:0.9rem;font-size:1.5rem}
+      .close-btn{position:absolute;top:1.1rem;right:1.1rem;font-size:1.3rem;background:none;border:none;color:var(--text-dim);cursor:pointer;transition:color 0.3s ease}
+      .close-btn:hover{color:var(--accent)}
+    </style>
+  </head>
+  <body>
+    <header>
+      <a class="logo" href="index.html">← Home</a>
+    </header>
+    <main>
+      <h1>SERMs & Ancillary Compounds</h1>
+      <div class="search-bar"><input type="text" id="search" placeholder="Search SERMs / ancillaries…" /></div>
+      <div class="grid" id="grid"></div>
+    </main>
+
+    <div id="modal" class="hidden" tabindex="-1"><div class="modal-content"></div></div>
+
+    <script>
+      /* ----------------------------- DATA -------------------------------- */
+      const serms = [
+  {
+    name: "Arimidex (Anastrozole)",
+    dose: "0.25–0.5 mg oral EOD",
+    pros: "Non-steroidal AI; drops estradiol 70–80 % in hours",
+    cons: "HDL ↓; joint dryness; rebound E2 if stopped abruptly",
+    details: "Competitive CYP19A1 inhibitor used on-cycle to keep E2/bloat in range (ideal 20–35 pg/mL)."
+  },
+  {
+    name: "Letrozole",
+    dose: "0.25 mg oral E2D → titrate",
+    pros: "Strongest oral AI; crushes estrogen rapidly",
+    cons: "E2 crash → mood/libido loss; LDL ↑; bone de-mineralisation long-term",
+    details: "Triazole AI that can drop E2 below assay detection within 48 h — reserved for emergency gyno flare control."
+  },
+  {
+    name: "Exemestane (Aromasin)",
+    dose: "12.5 mg oral EOD",
+    pros: "Suicide (irreversible) AI; no rebound; mild androgenic boost",
+    cons: "Costly; HDL ↓; liver enzymes may rise",
+    details: "Steroidal AI binds aromatase covalently, permanently disabling the enzyme until new protein is synthesised."
+  },
+  {
+    name: "Formestane",
+    dose: "25 mg trans-dermal daily or 250 mg IM E3D",
+    pros: "OTC suicide AI gel; local lipolysis claims",
+    cons: "Skin irritation; weaker systemic effect than Exemestane",
+    details: "4-hydroxy-androstenedione converts to inactive 4-oxo metabolites, knocking out aromatase with minimal hepatic impact."
+  },
+
+  /* ---------------- SERMs (Selective ER Modulators) ----------- */
+  {
+    name: "Tamoxifen (Nolvadex)",
+    dose: "20 mg oral nightly",
+    pros: "Blocks breast-tissue ERα → gyno prevention & PCT staple",
+    cons: "Thrombo-embolism risk; hot flashes; lowers IGF-1",
+    details: "SERM acting as ER antagonist in breast yet agonist in liver & bone; kick-starts LH/FSH when long-esters are cleared."
+  },
+  {
+    name: "Clomiphene (Clomid)",
+    dose: "50 mg oral nightly then taper",
+    pros: "Powerful HPTA restart; raises LH/FSH 2- to 3-fold",
+    cons: "Visual tracers; mood swings; brain fog at 100 mg+",
+    details: "Mixture of zuclomiphene (long-acting) & enclomiphene (fast) that disinhibits GnRH by blocking estrogen feedback at the hypothalamus."
+  },
+  {
+    name: "Raloxifene (Evista)",
+    dose: "30–60 mg oral daily",
+    pros: "Superior gyno reversal vs Tamox; lowers LDL; bone density ↑",
+    cons: "Leg cramps; clot risk similar to Tamox",
+    details: "Second-gen SERM with stronger ER antagonism in breast but weaker hepatic estrogenicity—popular for pubertal gyno management."
+  },
+  {
+    name: "Toremifene (Fareston)",
+    dose: "60 mg oral daily",
+    pros: "Gentler on mood than Clomid; similar PCT efficacy",
+    cons: "Expensive; QT-interval prolongation possible",
+    details: "Chlorinated tamoxifen analog; raises LH/FSH without the visual distortions often seen with Clomid."
+  },
+
+  /* ---------------- 5-α-Reductase Inhibitors ------------------ */
+  {
+    name: "Finasteride",
+    dose: "1 mg oral daily (hair) / 5 mg (prostate)",
+    pros: "Cuts DHT ~65 %; slows androgenic alopecia; shrinks prostate",
+    cons: "Post-finasteride libido issues (rare); slight T ↑ may raise E2",
+    details: "Type-II 5-α-reductase blocker preventing T → DHT conversion in scalp & prostate."
+  },
+  {
+    name: "Dutasteride",
+    dose: "0.5 mg oral every other day",
+    pros: "Inhibits type-I & II isozymes → DHT ↓ 90 %",
+    cons: "Long t½ (5 wk) makes side-effects linger; PSA lab interference",
+    details: "Dual 5-AR inhibitor offering stronger scalp protection but slower wash-out than Finasteride."
+  },
+
+  /* ---------------- Prolactin Control ------------------------- */
+  {
+    name: "Cabergoline",
+    dose: "0.25 mg oral 2×/week",
+    pros: "Drops prolactin 60–80 %; combats ‘Deca/Tren dick’",
+    cons: "Orthostatic hypotension; nausea if taken empty stomach",
+    details: "D2 receptor agonist with 63-h half-life, restoring dopamine tone suppressed by 19-nor compounds."
+  },
+  {
+    name: "Pramipexole",
+    dose: "0.125 mg oral HS titrate to 0.5 mg",
+    pros: "Alternative for prolactin; improves REM sleep; antidepressant",
+    cons: "Compulsive behaviour (gambling); morning nausea",
+    details: "High-affinity D2/D3 agonist, shorter t½ than Caber—dose at night to leverage sedative effect."
+  },
+  {
+    name: "Bromocriptine",
+    dose: "2.5 mg oral QAM with food",
+    pros: "Cheap ergoline DA agonist; lowers prolactin & may aid fat-loss",
+    cons: "GI upset; dizziness; shorter action than Caber",
+    details: "Older D2 agonist that also activates α-adrenergic pathways increasing basal metabolic rate modestly."
+  },
+
+  /* ---------------- Sympathomimetic Fat-loss ------------------ */
+  {
+    name: "Clenbuterol",
+    dose: "20–120 µg oral (2-w on / 2-w off)",
+    pros: "Potent β2 agonist thermogenesis; mild anti-catabolic",
+    cons: "Tachycardia; cardiac hypertrophy long-term; tremors",
+    details: "Stimulates β2-adrenergic receptors raising cAMP and body-temperature ~0.5 °C; desensitises after ~14 d."
+  },
+  {
+    name: "Albuterol (Salbutamol)",
+    dose: "4–8 mg oral pre-workout or 2–4 mg TID",
+    pros: "Shorter half-life than Clen; less cardiac strain; legal inhaler",
+    cons: "Shakiness; potassium ↓; needs 3–4 daily doses",
+    details: "Rapid-acting β2 agonist giving 2–3 h thermogenic window—handy for fasted cardio."
+  },
+  {
+    name: "Ephedrine (ECA stack)",
+    dose: "25 mg + 200 mg caffeine TID (6 wk max)",
+    pros: "Synergistic β1/β2/β3 + caffeine ↑ NE; appetite suppression",
+    cons: "BP ↑; insomnia; receptor down-regulation",
+    details: "Mixed adrenergic agonist plus aspirin/caffeine boosting cAMP & norepinephrine—classic cutting staple before Clen popularity."
+  },
+  {
+    name: "Yohimbine HCl",
+    dose: "0.2 mg/kg oral fasted AM",
+    pros: "Alpha-2 antagonist targets stubborn hip/ab fat; libido ↑",
+    cons: "Anxiety/jitters; BP ↑ in non-fasted state",
+    details: "Blocks presynaptic α2 receptors, unleashing norepinephrine and blood-flow to adipose tissue—ineffective if insulin present."
+  },
+
+  /* ---------------- Thyroid & Mitochondrial -------------------- */
+  {
+    name: "T3 (Liothyronine)",
+    dose: "25–75 µg oral split BID",
+    pros: "Maximal metabolic rate ↑; synergistic with GH/Clen",
+    cons: "Muscle catabolism; arrhythmia if overshot; needs taper",
+    details: "Bioactive triiodothyronine bypasses T4→T3 conversion, accelerating ATP turnover and Na⁺/K⁺-ATPase activity."
+  },
+  {
+    name: "T4 (Levothyroxine)",
+    dose: "50–150 µg oral AM (empty stomach)",
+    pros: "Gentler metabolism lift; smoother serum curve; cheap",
+    cons: "Requires deiodinase conversion; slower onset",
+    details: "Pro-hormone thyroxine provides steady pool for tissue-specific T3 synthesis, often stacked with GH in long cuts."
+  },
+  {
+    name: "DNP (2,4-Dinitrophenol)",
+    dose: "200 mg oral daily ×10–14 d (ADVANCED ONLY)",
+    pros: "Fastest fat-loss (≈1 % body-wt/week) independent of diet",
+    cons: "Hyperthermia, cataracts, death if mis-dosed; profuse sweating",
+    details: "Mitochondrial proton-ionophore uncouples oxidative phosphorylation, forcing 50–60 % energy to dissipate as heat."
+  },
+
+  /* ---------------- Insulin-Sensitizers ------------------------ */
+  {
+    name: "Metformin",
+    dose: "500–1,000 mg oral BID with meals",
+    pros: "AMPK activation; lowers hepatic glucose output; may blunt AAS insulin-resistance",
+    cons: "GI upset; B12 depletion; lactic acidosis in renal failure",
+    details: "Biguanide that inhibits mitochondrial Complex-I raising AMP:ATP → AMPK, improving glucose disposal and lipid profile."
+  },
+  {
+    name: "Berberine",
+    dose: "500 mg oral TID",
+    pros: "Metformin-like fasting glucose drop; gut-health benefits",
+    cons: "GI cramp in some; CYP3A4 interactions",
+    details: "Plant isoquinoline alkaloid activates AMPK & increases GLP-1, serving as an OTC insulin-sensitizer during bulk phases."
+  },
+
+  /* ---------------- PDE-5 Inhibitors --------------------------- */
+  {
+    name: "Sildenafil (Viagra)",
+    dose: "25–100 mg oral PRN 30 min pre",
+    pros: "Restores erectile firmness; pulmonary vasodilation",
+    cons: "Headache; visual blue tint; BP ↓",
+    details: "Selective PDE-5 blocker raising cGMP in corpus cavernosum for 4–6 h."
+  },
+  {
+    name: "Tadalafil (Cialis)",
+    dose: "5–20 mg oral PRN or 5 mg daily",
+    pros: "36-h half-life (‘weekender’); mild BP support for Tren",
+    cons: "Back pain; nasal congestion; interacts with nitrates",
+    details: "Long-acting PDE-5 inhibitor also used at 5 mg ED to offset AAS-induced endothelial dysfunction."
+  },
+  {
+    name: "Vardenafil (Levitra)",
+    dose: "10–20 mg oral PRN",
+    pros: "Faster onset than Sildenafil; less visual disturbance",
+    cons: "Shorter duration (~5 h); dyspepsia",
+    details: "PDE-5 blocker with slightly higher PDE-6 selectivity, giving strong rigidity at lower dose in some men."
+  },
+  {
+    name: "Avanafil (Stendra)",
+    dose: "100–200 mg oral PRN (15 min pre)",
+    pros: "Quickest onset; fewer side-effects; food-independent",
+    cons: "Costly; shortest real-world track record",
+    details: "Next-gen PDE-5i reaching peak plasma in 30 min — convenient for spontaneous use."
+  }
+      ];
+
+      /* --------------------- INIT --------------------------- */
+      const grid = document.getElementById("grid");
+      const searchInput = document.getElementById("search");
+
+      const createCard = (c) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.name = c.name.toLowerCase();
+        card.innerHTML = `
+          <span class="tag">${c.dose}</span>
+          <h3>${c.name}</h3>
+          <p><strong>Pros:</strong>\n${c.pros}</p>
+          <p style="margin-top:0.6rem"><strong>Cons:</strong>\n${c.cons}</p>
+        `;
+        card.addEventListener("click", () => openModal(c));
+        return card;
+      };
+
+      const render = () => {
+        serms.forEach((c) => grid.appendChild(createCard(c)));
+        document.querySelectorAll(".card").forEach((el) => observer.observe(el));
+      };
+
+      /* ---------------- SEARCH ---------------- */
+      searchInput.addEventListener("input", (e) => {
+        const q = e.target.value.toLowerCase();
+        grid.querySelectorAll(".card").forEach((card) => {
+          card.style.display = card.dataset.name.includes(q) ? "block" : "none";
+        });
+      });
+
+      /* ---------------- MODAL ---------------- */
+      const modal = document.getElementById("modal");
+      const modalContent = modal.querySelector(".modal-content");
+      const openModal = (compound) => {
+        modalContent.innerHTML = `
+          <button class="close-btn" aria-label="Close modal">×</button>
+          <h3>${compound.name}</h3>
+          <p><strong>Standard Dose:</strong> ${compound.dose}</p>
+          <p style="margin-top:0.9rem;white-space:pre-line;"><strong>Pros:</strong>\n${compound.pros}</p>
+          <p style="margin-top:0.9rem;white-space:pre-line;"><strong>Cons:</strong>\n${compound.cons}</p>
+        `;
+        modal.classList.add("active");
+        modal.classList.remove("hidden");
+        modalContent.querySelector(".close-btn").addEventListener("click", closeModal);
+      };
+      const closeModal = () => {
+        modal.classList.remove("active");
+        setTimeout(() => modal.classList.add("hidden"), 300);
+      };
+      modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("active")) closeModal(); });
+
+      /* -------------- Scroll Reveal ------------- */
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("show");
+          obs.unobserve(entry.target);
+        });
+      }, {threshold:0.15});
+
+      render();
+    </script>
+  </body>
+</html>

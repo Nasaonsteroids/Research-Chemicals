@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Steroid Compound Library</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #0e0f11;
+        --card: rgba(255, 255, 255, 0.04);
+        --card-glow: rgba(0, 255, 204, 0.35);
+        --accent: #00ffd0;
+        --text: #eef3f7;
+        --text-dim: #8392a7;
+        --radius: 1.25rem;
+        --transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+      }
+      *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:"Inter",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+      header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;max-width:1200px;margin:0 auto}
+      a.logo{color:var(--text);font-weight:700;text-decoration:none}
+      main{max-width:1200px;margin:0 auto;padding:2.5rem 1.5rem}
+      h1{font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:1.75rem;position:relative}
+      h1::after{content:"";position:absolute;bottom:-6px;left:0;width:64px;height:3px;background:var(--accent);border-radius:2px}
+      .search-bar{width:100%;max-width:560px;margin:0 auto 2.2rem}
+      .search-bar input{width:100%;padding:0.85rem 1rem;background:var(--card);border:1px solid transparent;border-radius:var(--radius);color:var(--text);font-size:1rem;transition:border 0.3s ease}
+      .search-bar input:focus{outline:none;border-color:var(--accent)}
+      .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.5rem}
+      .card{background:var(--card);backdrop-filter:blur(22px) saturate(160%);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:1.5rem;position:relative;overflow:hidden;transform:translateY(20px);opacity:0;transition:var(--transition);cursor:pointer}
+      .card.show{transform:none;opacity:1}
+      .card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,var(--card-glow) 0%,transparent 60%);opacity:0;transition:opacity 0.4s ease}
+      .card:hover::before{opacity:1}
+      .card h3{font-size:1.1rem;margin-bottom:0.35rem}
+      .tag{display:inline-block;font-size:0.75rem;background:var(--accent);color:#000814;padding:2px 6px;border-radius:4px;font-weight:600;margin-bottom:0.9rem}
+      .card p{font-size:0.88rem;color:var(--text-dim);white-space:pre-line}
+      /* modal */
+      .hidden{display:none !important}
+      #modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:flex;justify-content:center;align-items:center;padding:1.5rem;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.4s ease}
+      #modal.active{opacity:1;pointer-events:all}
+      .modal-content{background:var(--card);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);max-width:540px;width:100%;padding:2rem 1.75rem;position:relative;animation:fadeUp 0.45s ease}
+      @keyframes fadeUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+      .modal-content h3{margin-bottom:0.9rem;font-size:1.5rem}
+      .close-btn{position:absolute;top:1.1rem;right:1.1rem;font-size:1.3rem;background:none;border:none;color:var(--text-dim);cursor:pointer;transition:color 0.3s ease}
+      .close-btn:hover{color:var(--accent)}
+    </style>
+  </head>
+  <body>
+    <header>
+      <a class="logo" href="index.html">← Home</a>
+    </header>
+    <main>
+      <h1>Anabolic‑Androgenic Steroids (AAS)</h1>
+      <div class="search-bar"><input type="text" id="search" placeholder="Search steroids…" /></div>
+      <div class="grid" id="grid"></div>
+    </main>
+
+    <div id="modal" class="hidden" tabindex="-1"><div class="modal-content"></div></div>
+
+    <script>
+      /* ----------------------------- DATA -------------------------------- */
+      const steroids = [
+/* ---- Depot Testosterone esters --------------------------------------- */
+  {
+    name: "Testosterone Enanthate",
+    dose: "200–600 mg IM weekly",
+    pros: "Reliable mass builder; cheap; predictable blood levels",
+    cons: "Estradiol & hematocrit ↑; water retention; full HPTA shutdown",
+    details: "7-carbon ester gives ~4-5 d half-life—gold-standard ‘test base’ for bulks or TRT."
+  },
+  {
+    name: "Testosterone Cypionate",
+    dose: "200–600 mg IM weekly",
+    pros: "Near-identical to Enanthate; slightly smoother peak; US-script friendly",
+    cons: "Same E2 / HCT issues; thick oil can sting",
+    details: "8-carbon ester (t½ ≈5–6 d) preferred in North America for replacement therapy."
+  },
+  {
+    name: "Testosterone Propionate",
+    dose: "50–100 mg IM EOD",
+    pros: "Fast onset; easier exit before PCT; less bloat if diet tight",
+    cons: "EOD (or daily) injections; high PIP for many users",
+    details: "Short 2-carbon ester peaks within 24 h—popular in short pre-contest stacks."
+  },
+  {
+    name: "Testosterone Phenylpropionate",
+    dose: "100 mg IM every 3 d",
+    pros: "Middle ground between Prop and Enan; smooth levels",
+    cons: "Scarce supply; still ≥2 pins/wk",
+    details: "3-carbon phenyl ester clears in ~6 d—often part of Sustanon blends."
+  },
+  {
+    name: "Testosterone Suspension",
+    dose: "50–100 mg IM/SC pre-workout or daily",
+    pros: "Immediate serum spike; no ester weight; water-based (small volume)",
+    cons: "Very painful injections; volatile estradiol",
+    details: "Un-estered micro-crystals of free testosterone—favoured for meet-day strength hits."
+  },
+  {
+    name: "Testosterone Undecanoate (Nebido)",
+    dose: "750–1000 mg IM q8–12 wk (TRT) or 250 mg weekly (cycle)",
+    pros: "Ultra-stable T for months; few injections",
+    cons: "Impossible to ‘pull’ quickly if sides; 4 mL deep-glute shot",
+    details: "11-carbon ester (t½ ≈34 d) used in long-interval clinical TRT."
+  },
+
+  // ---------- Mixed-ester & blends ----------
+  {
+    name: "Sustanon / Multi-ester Test",
+    dose: "250–500 mg IM weekly (split)",
+    pros: "Early spike + long tail; covers missed shots well",
+    cons: "Short esters cause estradiol spikes; under-dosed UGL vials common",
+    details: "Blend of propionate, phenylpropionate, isocaproate and decanoate esters—once-weekly TRT in some regions."
+  },
+
+  // ---------- Boldenone family ----------
+  {
+    name: "Boldenone Undecylenate (Equipoise)",
+    dose: "300–600 mg IM weekly",
+    pros: "RBC & appetite ↑; steady, lean gains",
+    cons: "BP ↑ via thick blood; anxiety/sweats; long ester delays recovery",
+    details: "Δ-Test derivative with mild aromatization; 14-d half-life—popular in endurance or recomp phases."
+  },
+  {
+    name: "Boldenone Cypionate",
+    dose: "200–400 mg IM weekly",
+    pros: "Clears faster than Undecylenate; easier PCT timing",
+    cons: "Same BP / anxiety issues; less clinical data",
+    details: "8-carbon ester (~8 d t½) offers EQ-like effects but quicker off-ramp."
+  },
+
+  // ---------- DHT-based hardeners ----------
+  {
+    name: "Drostanolone Propionate (Masteron-P)",
+    dose: "100 mg IM EOD",
+    pros: "Hard, dry cosmetic finish; anti-estrogenic",
+    cons: "HDL ↓; androgenic hair loss if prone",
+    details: "Non-aromatizing DHT-derivative ideal for the final 6–8 weeks before stage or photoshoot."
+  },
+  {
+    name: "Drostanolone Enanthate (Masteron-E)",
+    dose: "200–400 mg IM weekly",
+    pros: "Same hardness with fewer injections; stacks well with Tren/Test",
+    cons: "HDL still suppressed; possible acne",
+    details: "6-d half-life version—favoured in 12-week cutting cycles."
+  },
+  {
+    name: "Primobolan (Metenolone Enanthate)",
+    dose: "400–800 mg IM weekly",
+    pros: "Lean, keepable gains; little BP/liver impact",
+    cons: "Very costly; often counterfeited",
+    details: "Mild DHT-family anabolic that neither aromatizes nor elevates progesterone—used for safe cruising or female prep."
+  },
+  {
+    name: "Methenolone Acetate (Oral Primo)",
+    dose: "50–100 mg oral daily",
+    pros: "Primo effect without needles; negligible liver stress",
+    cons: "Low bio-availability so pricey; counterfeit risk high",
+    details: "C-2 acetyl ester survives first-pass just long enough for moderate anabolic activity."
+  },
+
+  // ---------- Nandrolone family ----------
+  {
+    name: "Nandrolone Decanoate (Deca-Durabolin)",
+    dose: "200–400 mg IM weekly",
+    pros: "Joint relief; collagen synthesis ↑; big off-season mass",
+    cons: "Prolactin-mediated ED/gyno; 15-d half-life prolongs shutdown",
+    details: "19-nor that converts to DHN—not DHT—reducing scalp oils but raising prolactin."
+  },
+  {
+    name: "Nandrolone Phenylpropionate (NPP)",
+    dose: "200–350 mg IM weekly (split EOD)",
+    pros: "All Deca benefits with faster clearance; less water retention",
+    cons: "EOD pins; prolactin risk remains",
+    details: "4-d half-life ester—useful in shorter bulks or injury-healing stacks."
+  },
+  {
+    name: "Nandrolone Undecanoate",
+    dose: "300–400 mg IM every 2 wk",
+    pros: "Infrequent shots; therapeutic use for anemia/osteoporosis",
+    cons: "Shutdown lasts months; scant bodybuilding data",
+    details: "21-carbon ester gives ultra-long profile similar to Nebido but for nandrolone."
+  },
+
+  // ---------- Dihydroboldenone ----------
+  {
+    name: "DHB (Dihydroboldenone Cypionate)",
+    dose: "200–400 mg IM weekly",
+    pros: "Oral-like strength & vascularity; dry gains",
+    cons: "Brutal PIP; limited human research",
+    details: "5-α-reduced EQ analogue—non-aromatizing but strongly anabolic via AR/ERK crosstalk."
+  },
+
+  // ---------- Trenbolone family ----------
+  {
+    name: "Trenbolone Acetate",
+    dose: "300–450 mg IM weekly (75–100 mg EOD)",
+    pros: "Unmatched strength & recomposition; clears fast if sides",
+    cons: "Night sweats, anxiety; BP ↑↑; prolactin gyno",
+    details: "19-nor binding AR & GR with equal zeal—raises IGF-1 and nutrient partitioning drastically."
+  },
+  {
+    name: "Trenbolone Enanthate",
+    dose: "200–400 mg IM weekly",
+    pros: "Fewer injections; steady plasma levels",
+    cons: "Sides linger 1-2 weeks after cessation",
+    details: "7-d half-life ester—requires seasoned users who tolerate Tren sides."
+  },
+  {
+    name: "Trenbolone Hex (Parabolan)",
+    dose: "200–300 mg IM weekly",
+    pros: "Convenient dosing; potent contest hardener",
+    cons: "Expensive & often faked; side-effects prolonged",
+    details: "Hexahydrobenzylcarbonate ester (~10 d t½) historically used in French medicine."
+  },
+  {
+    name: "Trenbolone Suspension",
+    dose: "30–50 mg IM pre-workout",
+    pros: "Explosive aggression & CNS drive; 24-h detection window",
+    cons: "Painful jab; acute side-storm",
+    details: "Un-estered Tren for meet-day strength peaks or final-week drying."
+  },
+  {
+    name: "Tri-Tren Blend",
+    dose: "≈200 mg IM weekly",
+    pros: "Full spectrum of short-/mid-/long Tren esters in one vial",
+    cons: "Impossible to titrate precisely; lab variability",
+    details: "Mix of acetate, enanthate & hex designed to ‘flatten’ Tren serum curve, mostly a marketing gimmick."
+  },
+
+  // ---------- Trestolone ----------
+  {
+    name: "Trestolone Acetate (MENT)",
+    dose: "25–50 mg IM daily",
+    pros: "Extremely potent mass gainer; works even without baseline Test",
+    cons: "Aromatizes 10× faster than Test → instant gyno; BP/HCT stress",
+    details: "19-nor that remains active without 5-α reduction—researched as potential male contraceptive."
+  },
+
+  // ---------- Oral 17-α-alkylated bulking agents ----------
+  {
+    name: "Methandienone (Dianabol)",
+    dose: "20–40 mg oral daily",
+    pros: "Rapid mass & strength; huge glycogen pump",
+    cons: "Bloat, BP ↑; hepatotoxic; HDL ↓",
+    details: "17-aa testosterone w/ strong aromatization—classic ‘kick-start’ for bulks."
+  },
+  {
+    name: "Oxymetholone (Anadrol)",
+    dose: "25–50 mg oral daily",
+    pros: "Extreme scale weight; appetite aid at low doses",
+    cons: "Kills appetite in some; HDL crash; liver stress",
+    details: "2-hydroxy DHT derivative causing mass even with low estrogen—mechanism partly prostaglandin-mediated."
+  },
+  {
+    name: "Stanozolol (Winstrol)",
+    dose: "30–50 mg oral daily (or 50 mg IM ED)",
+    pros: "Dry, grainy hardness; lowers SHBG",
+    cons: "HDL massacre; joint pain; androgenic hair loss",
+    details: "Non-aromatizing DHT analog used for sprint speed and stage conditioning."
+  },
+  {
+    name: "Oxandrolone (Anavar)",
+    dose: "25–50 mg oral daily",
+    pros: "Lean strength gains; mild on BP; female-friendly",
+    cons: "Expensive; HDL ↓; modest liver strain",
+    details: "7-α-methyl DHT derivative—excellent nitrogen retention with minimal androgenic sides."
+  },
+  {
+    name: "Turinabol (Oral-Tbol)",
+    dose: "30–40 mg oral daily",
+    pros: "Steady gains; no water bloat",
+    cons: "Liver & lipid strain; test suppression",
+    details: "Chlorinated Dbol that cannot aromatize—East German doping staple."
+  },
+  {
+    name: "Fluoxymesterone (Halotestin)",
+    dose: "10–20 mg 2–3 h pre-event",
+    pros: "CNS aggression & strength without weight gain",
+    cons: "Highly hepatotoxic; mood volatility; HDL single-digit territory",
+    details: "Potent AR agonist with very low anabolic : androgenic ratio—reserved for max-out day."
+  },
+  {
+    name: "Superdrol (Methasterone)",
+    dose: "20 mg oral daily (≤4 wk)",
+    pros: "Enormous strength & dry fullness",
+    cons: "HDL ⁓−50 %; AST/ALT spike; lethargy",
+    details: "Double-methylated DHT analog scoring off-the-chart anabolic numbers—short cycles only."
+  },
+  {
+    name: "Methyl-1-Testosterone (M1T)",
+    dose: "5–10 mg oral daily (2–3 wk)",
+    pros: "Potent mass burst at tiny dose",
+    cons: "Severe liver impact; BP ↑; lethargy",
+    details: "17-aa 1-dehydro Test—effectively ‘orally active Tren’ but with harsher toxicity."
+  },
+
+  // ---------- Designer orals ----------
+  {
+    name: "Epistane (Methylepitiostane)",
+    dose: "20–40 mg oral daily",
+    pros: "Dry recomp; mild BP impact; anti-estrogenic",
+    cons: "HDL ↓; liver stress if >30 mg",
+    details: "DHT derivative binding ERβ weakly—hardens physique while lowering SHBG."
+  },
+  {
+    name: "Dimethazine (DMZ)",
+    dose: "20–30 mg oral daily (4 wk)",
+    pros: "Strength comparable to Superdrol; moderately dry",
+    cons: "Double 17-aa → heavy liver load; limited research",
+    details: "‘Twin’ Superdrol molecule linked by diazene bridge—splits in vivo into two active methasterone moieties."
+  },
+  {
+    name: "Furazabol (Miotolan)",
+    dose: "20–40 mg oral daily",
+    pros: "Similar to Winny but friendlier lipids; subtle hardness",
+    cons: "Weak at low doses; rare supply",
+    details: "Stanozolol analog with hetero-aromatic ring believed to preserve HDL better."
+  },
+  {
+    name: "Methyltestosterone",
+    dose: "10–25 mg oral/sublingual pre-event",
+    pros: "Instant aggression & strength; cheap",
+    cons: "Gyno risk via aromatization; liver toxic; poor anabolic ratio",
+    details: "Plain Test with 17-aa—used historically by boxers for ‘edge’ before bouts."
+  }
+      ];
+
+      /* --------------------- INIT --------------------------- */
+      const grid = document.getElementById("grid");
+      const searchInput = document.getElementById("search");
+
+      const createCard = (c) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.name = c.name.toLowerCase();
+        card.innerHTML = `
+          <span class="tag">${c.dose}</span>
+          <h3>${c.name}</h3>
+          <p><strong>Pros:</strong>\n${c.pros}</p>
+          <p style="margin-top:0.6rem"><strong>Cons:</strong>\n${c.cons}</p>
+        `;
+        card.addEventListener("click", () => openModal(c));
+        return card;
+      };
+
+      const render = () => {
+        steroids.forEach((c) => grid.appendChild(createCard(c)));
+        // Reveal
+        document.querySelectorAll(".card").forEach((el) => observer.observe(el));
+      };
+
+      /* ---------------- SEARCH ---------------- */
+      searchInput.addEventListener("input", (e) => {
+        const q = e.target.value.toLowerCase();
+        grid.querySelectorAll(".card").forEach((card) => {
+          card.style.display = card.dataset.name.includes(q) ? "block" : "none";
+        });
+      });
+
+      /* ---------------- MODAL ---------------- */
+      const modal = document.getElementById("modal");
+      const modalContent = modal.querySelector(".modal-content");
+      const openModal = (compound) => {
+        modalContent.innerHTML = `
+          <button class="close-btn" aria-label="Close modal">×</button>
+          <h3>${compound.name}</h3>
+          <p><strong>Standard Dose:</strong> ${compound.dose}</p>
+          <p style="margin-top:0.9rem;white-space:pre-line;"><strong>Pros:</strong>\n${compound.pros}</p>
+          <p style="margin-top:0.9rem;white-space:pre-line;"><strong>Cons:</strong>\n${compound.cons}</p>
+        `;
+        modal.classList.add("active");
+        modal.classList.remove("hidden");
+        modalContent.querySelector(".close-btn").addEventListener("click", closeModal);
+      };
+      const closeModal = () => {
+        modal.classList.remove("active");
+        setTimeout(() => modal.classList.add("hidden"), 300);
+      };
+      modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("active")) closeModal(); });
+
+      /* -------------- Scroll Reveal ------------- */
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("show");
+          obs.unobserve(entry.target);
+        });
+      }, {threshold:0.15});
+
+      render();
+    </script>
+  </body>
+</html>
