@@ -1034,7 +1034,158 @@
   }
         ]
       };
+      const halfLives = {
+  "Semaglutide": "≈7 days (160–168 h)",
+  "Tirzepatide": "≈5 days (120 h)",
+  "Retatrutide": "≈6–7 days (preliminary)",
+  "Survodutide (BI456906)": "≈5 days",
+  "AOD‑9604 (hGH frag 176‑191)": "≈2–3 h",
+  "Mazdutide (LY3502970)": "≈4 days (95 h)",
+  "Cagrilintide (AMG‑133)": "≈8 days",
+  "IGF‑1 LR3": "20–30 h",
+  "IGF‑DES (1‑3)": "≈10 min",
+  "Follistatin‑344/315": "≈3–6 h (peptide)",
+  "GDF‑8 neutralising Ab": "10–14 days",
+  "BPC‑157": "≈4–6 h",
+  "TB‑500 (Thymosin‑β4)": "≈2–4 h",
+  "GHK‑Cu (Tripeptide‑1‑Cu)": "≈30 min",
+  "LL‑37 (Cathelicidin)": "≈1–2 h",
+  "Thymosin α1": "≈2 h",
+  "Thymalin (Thymus‑extract)": "≈30–60 min",
+  "KPV (Lys‑Pro‑Val)": "≈9 min",
+  "Hexarelin (Examorelin)": "≈55 min",
+  "Tesamorelin (Egrifta)": "≈30 min",
+  "HMG (Human Menopausal Gonadotropin)": "≈30 h",
+  "Kisspeptin‑10 (KP‑10)": "≈60 min (SC)",
+  "Glutathione (IV)": "≈10 min",
+  "Cerebrolysin": "≤6 h",
+  "Epithalon (Epitalon)": "≈2 h",
+  "MOTS‑c": "≈2–4 h",
+  "FOXO4‑DRI": "≈1–2 h (preclinical)",
+  "Melatonin (IV bolus)": "≈45 min",
+  "NAD⁺ / NMN": "NAD⁺ ≈1–2 h; NMN ≈25 min",
+  "SS‑31 (Elamipretide)": "≈2 h",
+  "Snap‑8 (Acetyl Octapeptide‑3)": "≈24 h (topical residence)",
+  "Ara‑290 (Cibinetide)": "≈2 h",
+  "Selank": "≈5–10 min plasma; CNS ≈4 h",
+  "Semax": "≈20 min",
+  "PT‑141 (Bremelanotide)": "≈2.7 h",
+  "Oxytocin (intranasal)": "≈3–5 min plasma",
+  "Insulin (rapid‑acting)": "≈5–10 min",
+  "hCG (Human Chorionic Gonadotropin)": "≈36 h",
+  "EPO‑α (Erythropoietin)": "≈9 h (SC)",
+  "5‑Amino‑1‑MQ": "≈4 h (rat)",
+  "AICAR": "≈4 h",
+  "Sermorelin": "≈10–20 min",
+  "Ipamorelin": "≈2 h",
+  "GHRP-2": "≈30 min",
+  "GHRP-6": "≈30 min",
+  "PEG-MGF": "≈36–48 h",
+  "DSIP": "≈2–4 h",
+  "Dihexa": "≈7–12 h",
+  "Liraglutide": "≈13 h",
+  "Exendin-4": "≈2.4 h",
+  "VIP (Vasoactive Intestinal Peptide)": "≈2–5 min",
+  "GLOW Blend (BPC‑157/TB‑500/GHK)": "Composite 30 min–6 h",
+  "BG37 Hair Blend": "Composite 30 min–6 h",
+  "BBG70 Post‑surgery Blend": "Composite 30 min–6 h",
+  "CJC‑1295 + Ipamorelin": "CJC‑1295 ≈8 days; Ipamorelin ≈2 h",
+  "MT‑2 / PT‑141 combo": "MT‑2 ≈3–4 h; PT‑141 ≈2.7 h",
+  "Adipotide (FTP‑P1)": "≈0.7 h (rat)",
+  "Gonadorelin": "≈2–4 min",
+  "Triptorelin (GnRH super‑agonist)": "≈3 h (depot weeks)",
+  "ACE-031 (ActRIIB-Fc)": "10–15 days",
+  "Apelin-13": "≈5 min",
+  "Angiotensin (1-7)": "≈30 min",
+  "P21": "≈4 h (rodent)",
+  "Noopept (GVS-111)": "≈30 min",
+  "Pal-GHK": "≈30 min (topical)",
+  "Pal-Tripeptide-38 (Matrixyl Synthe 6)": "≈24 h (topical)",
+  "TB4 Fragment (TB4-Frag)": "≈2 h",
 
+  // ---------------- AAS ----------------
+  "Testosterone Enanthate": "≈4–5 days",
+  "Testosterone Cypionate": "≈5–6 days",
+  "Testosterone Propionate": "≈0.8–1 day",
+  "Testosterone Phenylpropionate": "≈3–4 days",
+  "Testosterone Suspension": "≈1 h",
+  "Testosterone Undecanoate (Nebido)": "≈34 days",
+  "Sustanon / Multi-ester Test": "Composite 0.8–20 days",
+  "Boldenone Undecylenate (Equipoise)": "≈14 days",
+  "Boldenone Cypionate": "≈8 days",
+  "Drostanolone Propionate (Masteron-P)": "≈2 days",
+  "Drostanolone Enanthate (Masteron-E)": "≈6 days",
+  "Primobolan (Metenolone Enanthate)": "≈10 days",
+  "Methenolone Acetate (Oral Primo)": "≈6 h",
+  "Nandrolone Decanoate (Deca-Durabolin)": "≈15 days",
+  "Nandrolone Phenylpropionate (NPP)": "≈4 days",
+  "Nandrolone Undecanoate": "≈20 days",
+  "DHB (Dihydroboldenone Cypionate)": "≈4 days",
+  "Trenbolone Acetate": "≈2–3 days",
+  "Trenbolone Enanthate": "≈7 days",
+  "Trenbolone Hex (Parabolan)": "≈10 days",
+  "Trenbolone Suspension": "≈1 h",
+  "Tri-Tren Blend": "Composite 1–10 days",
+  "Trestolone Acetate (MENT)": "≈1 day",
+  "Methandienone (Dianabol)": "≈4.5 h",
+  "Oxymetholone (Anadrol)": "≈9 h",
+  "Stanozolol (Winstrol)": "≈9 h (oral) / 24 h IM",
+  "Oxandrolone (Anavar)": "≈9–10 h",
+  "Turinabol (Oral-Tbol)": "≈16 h",
+  "Fluoxymesterone (Halotestin)": "≈9 h",
+  "Superdrol (Methasterone)": "≈8 h",
+  "Methyl-1-Testosterone (M1T)": "≈4–6 h",
+  "Epistane (Methylepitiostane)": "≈6–8 h",
+  "Dimethazine (DMZ)": "≈6 h",
+  "Furazabol (Miotolan)": "≈4 h",
+  "Methyltestosterone": "≈3 h",
+
+  // -------------- SARMs & Adjacent ----------------
+  "RAD-140 (Testolone)": "≈60 h",
+  "LGD-4033 (Ligandrol)": "≈24–36 h",
+  "MK-2866 (Ostarine, Enobosarm)": "≈24 h",
+  "S4 (Andarine)": "≈4–6 h",
+  "LGD-3303": "≈12 h",
+  "S23": "≈11.9 h",
+  "AC-262536": "≈4–6 h",
+  "LGD-2226": "≈13 h",
+  "TLB-150 (RAD-150, Testolone-Benzoate)": "≈60+ h",
+  "YK-11": "≈6–10 h",
+  "GW-501516 (Cardarine)": "≈20–24 h",
+  "SR9009 (Stenabolic)": "≈1 h",
+  "MK-677 (Ibutamoren)": "≈4–6 h",
+
+  // -------------- SERMs & Ancillaries ----------------
+  "Arimidex (Anastrozole)": "≈46 h",
+  "Letrozole": "≈60 h (2.5 days)",
+  "Exemestane (Aromasin)": "≈24 h",
+  "Formestane": "≈2 h",
+  "Tamoxifen (Nolvadex)": "≈5–7 days",
+  "Clomiphene (Clomid)": "≈5–7 days",
+  "Raloxifene (Evista)": "≈28 h",
+  "Toremifene (Fareston)": "≈5 days",
+  "Finasteride": "≈6 h (men <60)",
+  "Dutasteride": "≈35 days",
+  "Cabergoline": "≈63–109 h",
+  "Pramipexole": "≈8–12 h",
+  "Bromocriptine": "≈15 h",
+  "Clenbuterol": "≈35 h",
+  "Albuterol (Salbutamol)": "≈4–6 h",
+  "Ephedrine (ECA stack)": "≈6 h",
+  "Yohimbine HCl": "≈1 h",
+  "T3 (Liothyronine)": "≈24 h",
+  "T4 (Levothyroxine)": "≈7 days",
+  "DNP (2,4-Dinitrophenol)": "≈36 h",
+  "Metformin": "≈6 h",
+  "Berberine": "≈4 h",
+  "Sildenafil (Viagra)": "≈4 h",
+  "Tadalafil (Cialis)": "≈17.5 h",
+  "Vardenafil (Levitra)": "≈4–5 h",
+  "Avanafil (Stendra)": "≈5 h"
+};
+      Object.values(fullData).forEach(category =>
+    category.forEach(c => c.halfLife = halfLives[c.name] || "N/A")
+  );
       /* --------------------- INIT --------------------------- */
       const params = new URLSearchParams(window.location.search);
       let cat = params.get("type") || "peptides";
@@ -1057,14 +1208,15 @@
         card.className = "card";
         card.dataset.name = c.name.toLowerCase();
         card.innerHTML = `
-          <span class="tag">${c.dose}</span>
-          <h3>${c.name}</h3>
-          <p><strong>Pros:</strong>\n${c.pros}</p>
-          <p style="margin-top:0.6rem"><strong>Cons:</strong>\n${c.cons}</p>
+            <span class="tag">${c.dose}</span>
+            <h3>${c.name}</h3>
+            <p><strong>t½:</strong> ${c.halfLife}</p>          <!-- ← NEW LINE -->
+            <p><strong>Pros:</strong>\n${c.pros}</p>
+            <p style="margin-top:0.6rem"><strong>Cons:</strong>\n${c.cons}</p>
         `;
         card.addEventListener("click", () => openModal(c));
         return card;
-      };
+        };
 
       select.addEventListener("change", (e) => {
         cat = e.target.value;
@@ -1081,25 +1233,31 @@
       });
 
       /* ---------------- MODAL ---------------- */
-      const modal = document.getElementById("modal");
-      const modalContent = modal.querySelector(".modal-content");
-      const openModal = (compound) => {
-        modalContent.innerHTML = `
-          <button class="close-btn" aria-label="Close modal">×</button>
-          <h3>${compound.name}</h3>
-          <p><strong>Standard Dose:</strong> ${compound.dose}</p>
-          <p style="margin-top:0.9rem;white-space:pre-line;"><strong>Pros:</strong>\n${compound.pros}</p>
-          <p style="margin-top:0.9rem;white-space:pre-line;"><strong>Cons:</strong>\n${compound.cons}</p>
-          ${compound.details ? `<p style="margin-top:0.9rem;white-space:pre-line;">${compound.details}</p>` : ""}
-        `;
-        modal.classList.add("active");
-        modal.classList.remove("hidden");
-        modalContent.querySelector(".close-btn").addEventListener("click", closeModal);
-      };
-      const closeModal = () => {
-        modal.classList.remove("active");
-        setTimeout(() => modal.classList.add("hidden"), 300);
-      };
+/* ---------------- MODAL ---------------- */
+const modal      = document.getElementById("modal");
+const modalContent = modal.querySelector(".modal-content");
+
+const openModal = (compound) => {
+  modalContent.innerHTML = `
+    <button class="close-btn" aria-label="Close modal">×</button>
+    <h3>${compound.name}</h3>
+    <p><strong>Standard&nbsp;Dose:</strong> ${compound.dose}</p>
+    <p><strong>Half-life:</strong> ${compound.halfLife}</p>
+    <p style="margin-top:0.9rem;white-space:pre-line;"><strong>Pros:</strong>\n${compound.pros}</p>
+    <p style="margin-top:0.9rem;white-space:pre-line;"><strong>Cons:</strong>\n${compound.cons}</p>
+    ${compound.details ? `<p style="margin-top:0.9rem;white-space:pre-line;">${compound.details}</p>` : ""}
+  `;
+
+  modal.classList.add("active");
+  modal.classList.remove("hidden");
+  modalContent.querySelector(".close-btn").addEventListener("click", closeModal);
+};
+
+const closeModal = () => {
+  modal.classList.remove("active");
+  setTimeout(() => modal.classList.add("hidden"), 300);
+};
+
       modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
       document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("active")) closeModal(); });
 
