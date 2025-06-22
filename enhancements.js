@@ -164,201 +164,271 @@ const extraMeta = {
   'AICAR': { tags:['AMPK','endurance'], risk:3, dosePerKg:[10], category:'misc' }
 };
 
-/* ================== 2. Slug-helper + metaBySlug ======================= */
-function canon(str=''){
+/* ====================== 2. Slug‑helper ================================= */
+function canon (str = "") {
   return str
-    .normalize('NFKD')                // width/accents normal
-    .replace(/[\u2010-\u2015]/g,'-')  // figure/en dash etc. → -
-    .replace(/\s+/g,'-')              // alla blank-tecken → -
+    .normalize("NFKD")            // width / accents → normal ascii
+    .replace(/[\u2010-\u2015]/g, "-") // fancy dashes → hyphen
+    .replace(/\s+/g, "-")        // whitespace → hyphen
     .toLowerCase()
-    .replace(/[^a-z0-9\-]/g,'');      // bara a-z, 0-9 och -
+    .replace(/[^a-z0-9\-]/g, ""); // bara a‑z, 0‑9 och -
 }
-const metaBySlug={};
-for(const [name,meta] of Object.entries(extraMeta))
-  metaBySlug[canon(name)]=meta;
 
-/* ============================== 3. Script ============================= */
-(() => {
-  const ready=(cb)=>document.readyState==='loading'
-    ? document.addEventListener('DOMContentLoaded',cb,{once:true})
-    : cb();
+/* ====================== 3. Bygg global lookup ========================== */
+const defaultRisk = { peptides:2, aas:4, sarms:3, serms:2, misc:3 };
 
-  ready(() => {
-    /* ------------ 3.1 Samla window.data ----------------------------- */
-    if(!window.data) window.data={};
-    [['fullData',null],['peptides','peptides'],['aas','aas'],
-     ['steroids','aas'],['sarms','sarms'],['serms','serms']]
-      .forEach(([src,cat])=>{ if(window[src]) window.data[cat||src]=window[src];});
+function buildLookup () {
+  const lookup = {}; // slug → { name, tags, risk, dosePerKg, category, … }
 
-    Object.entries(window.data).forEach(([cat,val])=>{
-      if(Array.isArray(val)) return;
-      const arr=[]; Object.values(val).forEach(v=>{
-        if(Array.isArray(v)) arr.push(...v);
-        else if(v && typeof v==='object' && v.name) arr.push(v);
-      });
-      window.data[cat]=arr;
-    });
+  // 3.1  Samla ihop befintliga window.data‑strukturer om de finns
+  if (!window.data) window.data = {};
+  [ ["fullData", null], ["peptides", "peptides"], ["aas", "aas"],
+    ["steroids", "aas"], ["sarms", "sarms"], ["serms", "serms"] ]
+    .forEach(([src, cat]) => { if (window[src]) window.data[cat || src] = window[src]; });
 
-    /* ------------ 3.2 Enrich + inject missing ----------------------- */
-    window.extraMeta=extraMeta;
-    const defaultRisk={peptides:2,aas:4,sarms:3,serms:2,misc:3};
-
-    Object.entries(window.data).forEach(([cat,arr])=>{
-      arr.forEach(c=>{
-        const m=metaBySlug[canon(c.name)]||{};
-        c.tags      ??= m.tags      ?? [cat.slice(0,-1)];
-        c.risk      ??= m.risk      ?? defaultRisk[cat]??3;
-        c.dosePerKg ??= m.dosePerKg;
-        c.category  ??= cat;
-      });
-    });
-
-    for(const [name,meta] of Object.entries(extraMeta)){
-      const exists=Object.values(window.data)
-        .some(arr=>arr.some(c=>canon(c.name)===canon(name)));
-      if(!exists){
-        const cat=meta.category||'misc';
-        (window.data[cat]??=[]).push({name,...meta});
+  // 3.2  Lägg in alla compounds (även nested arrays) i lookup
+  for (const [cat, val] of Object.entries(window.data)) {
+    const arr = Array.isArray(val) ? val : Object.values(val).flat();
+    arr.forEach(c => {
+      if (!c || !c.name) return;
+      const slug = canon(c.name);
+      const meta = extraMeta[c.name] || {};
+      const item = {
+        name: c.name,
+        dose: c.dose,
+        details: c.details,
+        dosePerKg: c.dosePerKg ?? meta.dosePerKg,
+        tags: c.tags ?? meta.tags,
+        risk: c.risk ?? meta.risk ?? defaultRisk[cat] ?? 3,
+        category: c.category ?? meta.category ?? cat,
+      };
+      if (!item.tags || !item.tags.length) {
+        // fallback till singular kategorinamn ("peptide", "sarm" …)
+        item.tags = [ (item.category || "misc").replace(/s$/, "") ];
       }
-    }
+      lookup[slug] = item;
+    });
+  }
 
-    /* ------------ 3.3 Disclaimer ------------------------------------ */
-    if(!localStorage.getItem('bannerDismissed')){
-      document.body.insertAdjacentHTML('afterbegin',
-        `<div id="disclaimerBanner">⚠️ Endast utbildningssyfte – ingen medicinsk rådgivning.
-           <button id="closeBanner" aria-label="Stäng">×</button></div>`);
-      document.getElementById('closeBanner').onclick=()=>{
-        document.getElementById('disclaimerBanner').remove();
-        localStorage.setItem('bannerDismissed','1');
+  // 3.3  Säkra att extraMeta‑poster som saknas i sidan också hamnar i lookup
+  for (const [rawName, meta] of Object.entries(extraMeta)) {
+    const slug = canon(rawName);
+    if (!lookup[slug]) {
+      lookup[slug] = {
+        name: rawName,
+        tags: meta.tags,
+        risk: meta.risk ?? defaultRisk[meta.category] ?? 3,
+        dosePerKg: meta.dosePerKg,
+        category: meta.category || "misc",
       };
     }
+  }
 
-    /* ------------ 3.4 Sidebar --------------------------------------- */
-    const sidebar=document.createElement('aside');
-    sidebar.id='filterSidebar';
-    sidebar.innerHTML=`
-      <h3 class="sidebarTitle">Filtrera substanser</h3>
-      <section id="filterTagsWrap" style="margin-bottom:1rem;"></section>
+  return lookup;
+}
 
-      <label style="display:block;margin-top:1rem;">Max risk:
-        <input type="range" id="riskRange" min="1" max="5" value="5">
-        <span id="riskVal">5</span>
-      </label>
+const LOOKUP = buildLookup();
+window.extraMeta = extraMeta;   // lämna kvar för dev‑konsol
+window.compLookup = LOOKUP;     // lättåtkomligt globalt
 
-      <hr style="margin:1rem 0;">
+/* ====================== 4. UI helpers ================================= */
+function $(sel, ctx=document) { return ctx.querySelector(sel); }
+function $all(sel, ctx=document) { return [...ctx.querySelectorAll(sel)]; }
 
-      <h4 style="margin:0 0 0.5rem 0;">Doskalkylator</h4>
-      <label>Vikt (kg):
-        <input type="number" id="weightInput" min="30" max="200" style="width:70px;">
-      </label>
-      <label style="display:block;margin:0.5rem 0;">Substans:
-        <select id="compoundSelect"></select>
-      </label>
-      <button id="calcBtn" style="margin-top:0.3rem;">Beräkna</button>
-      <p id="doseOut" style="margin-top:0.6rem;font-size:0.9rem;"></p>`;
+/* ====================== 5. Sidebar (filter) =========================== */
+function buildSidebar () {
+  // 5.1  Skapa element om de inte finns
+  let sidebar = $("#filterSidebar");
+  if (!sidebar) {
+    sidebar = document.createElement("aside");
+    sidebar.id = "filterSidebar";
     document.body.appendChild(sidebar);
+  }
 
-    document.body.appendChild(Object.assign(document.createElement('button'),{
-      id:'filterToggle',textContent:'☰ Filter',
-      onclick(){ sidebar.classList.toggle('open');
-        if(sidebar.classList.contains('open')) populateSelect(); }
-    }));
+  sidebar.innerHTML = `
+    <h3 class="sidebarTitle">Filtrera substanser</h3>
+    <section id="filterTagsWrap" style="margin-bottom:1rem;"></section>
 
-    /* ------------ 3.5 Sidebar-chip (alla taggar) -------------------- */
-    const allTags=new Set();
-    Object.values(window.data).forEach(arr=>
-      arr.forEach(c=>(c.tags||[]).forEach(t=>allTags.add(t))));
-    const wrap=document.getElementById('filterTagsWrap');
-    allTags.forEach(t=>{
-      const chip=document.createElement('span');
-      chip.className='chip'; chip.dataset.tag=t; chip.textContent=t;
-      chip.onclick=()=>toggle(t);
-      wrap.appendChild(chip);
+    <label style="display:block;margin-top:1rem;">Max risk:
+      <input type="range" id="riskRange" min="1" max="5" value="5">
+      <span id="riskVal">5</span>
+    </label>
+
+    <hr style="margin:1rem 0;">
+
+    <h4 style="margin:0 0 0.5rem 0;">Doskalkylator</h4>
+    <label>Vikt (kg):
+      <input type="number" id="weightInput" min="30" max="200" style="width:70px;">
+    </label>
+    <label style="display:block;margin:0.5rem 0;">Substans:
+      <select id="compoundSelect"></select>
+    </label>
+    <button id="calcBtn" style="margin-top:0.3rem;">Beräkna</button>
+    <p id="doseOut" style="margin-top:0.6rem;font-size:0.9rem;"></p>`;
+
+  // 5.2  Toggle‑knapp
+  if (!$("#filterToggle")) {
+    const btn = Object.assign(document.createElement("button"), {
+      id: "filterToggle",
+      textContent: "☰ Filter",
+      onclick () {
+        sidebar.classList.toggle("open");
+        if (sidebar.classList.contains("open")) populateSelect();
+      }
+    });
+    document.body.appendChild(btn);
+  }
+
+  // 5.3  Risk‑slider
+  const riskInput = $("#riskRange");
+  riskInput.oninput = e => {
+    $("#riskVal").textContent = e.target.value;
+    applyFilters();
+  };
+
+  // 5.4  Kalkylator
+  function populateSelect () {
+    const sel = $("#compoundSelect");
+    sel.innerHTML = "";
+    const names = Object.values(LOOKUP).map(o => o.name).sort();
+    names.forEach(n => sel.add(new Option(n, n)));
+  }
+  populateSelect();
+
+  $("#calcBtn").onclick = () => {
+    const sel = $("#compoundSelect");
+    const comp = LOOKUP[canon(sel.value)];
+    const kg = parseFloat($("#weightInput").value);
+    const out = $("#doseOut");
+    if (!comp) { out.textContent = "Substansen hittades inte."; return; }
+
+    let txt = `Typdos: ${comp.dose || "—"}`;
+    if (comp.dosePerKg && kg) {
+      const [lo, hi] = comp.dosePerKg.map(d => (d * kg).toFixed(2));
+      txt += `<br>≈ ${lo} – ${hi} mg/vecka (vid ${kg} kg)`;
+    }
+    out.innerHTML = txt;
+  };
+
+  // 5.5  Bygg tag‑chips (baserat på korten som finns i DOM just nu)
+  function refreshSidebarTags () {
+    const wrap = $("#filterTagsWrap");
+    wrap.innerHTML = "";
+
+    const allTags = new Set();
+    $all("[data-name]").forEach(card => {
+      const info = LOOKUP[canon(card.dataset.name)] || {};
+      (info.tags || []).forEach(t => allTags.add(t));
     });
 
-    /* ------------ 3.6 Centralt filter-state ------------------------- */
-    const active=new Set();
-    const riskInput=document.getElementById('riskRange');
+    allTags.forEach(t => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.dataset.tag = t;
+      chip.textContent = t;
+      chip.onclick = () => toggleTag(t);
+      wrap.appendChild(chip);
+    });
+  }
+  refreshSidebarTags();
 
-    function toggle(tag){
-      active.has(tag)?active.delete(tag):active.add(tag);
-      document.querySelectorAll(`.chip[data-tag="${CSS.escape(tag)}"]`)
-        .forEach(el=>el.classList.toggle('active',active.has(tag)));
-      applyFilters();
-    }
+  // Exponera så att enhance() kan kalla om nya kort läggs till
+  sidebar.refreshTags = refreshSidebarTags;
+}
 
-    /* ------------ 3.7 Helper-lookup --------------------------------- */
-    const find=(name)=>metaBySlug[canon(name)]||null;
+/* ====================== 6. Centralt filter‑state ====================== */
+const activeTags = new Set();
+let maxRiskCache = 5; // default
 
-    /* ------------ 3.8 Enhance kort ---------------------------------- */
-    function enhance(){
-      const fresh=[...document.querySelectorAll('[data-name]:not([data-enhanced])')];
-      if(!fresh.length) return;
-      fresh.forEach(card=>{
-        card.dataset.enhanced='1';
-        const comp=find(card.dataset.name); if(!comp) return;
+function toggleTag (tag) {
+  activeTags.has(tag) ? activeTags.delete(tag) : activeTags.add(tag);
+  // uppdatera chip‑utseende på alla förekomster
+  $all(`.chip[data-tag="${CSS.escape(tag)}"]`).forEach(el => el.classList.toggle("active", activeTags.has(tag)));
+  applyFilters();
+}
 
-        /* riskmätare */
-        const gauge=document.createElement('div');
-        gauge.className='riskGauge';
-        gauge.style.setProperty('--risk',comp.risk);
-        card.prepend(gauge);
-
-        /* tagchips på kortet */
-        (comp.tags||[]).forEach(t=>{
-          const chip=document.createElement('span');
-          chip.className='chip'; chip.dataset.tag=t; chip.textContent=t;
-          chip.classList.toggle('active',active.has(t));
-          chip.onclick=()=>toggle(t);
-          card.appendChild(chip);
-        });
-      });
-    }
-    enhance();
-    new MutationObserver(enhance).observe(document.body,{childList:true,subtree:true});
-
-    /* ------------ 3.9 Filtering ------------------------------------- */
-    riskInput.oninput=e=>{
-      document.getElementById('riskVal').textContent=e.target.value;
-      applyFilters();
-    };
-
-    function applyFilters(){
-      const maxRisk=+riskInput.value;
-      document.querySelectorAll('[data-name]').forEach(card=>{
-        const comp=find(card.dataset.name); if(!comp) return;
-        const tagOK=[...active].every(t=>(comp.tags||[]).includes(t));
-        const riskOK=comp.risk<=maxRisk;
-        card.style.display=(tagOK&&riskOK)?'':'none';
-      });
-    }
-
-    /* ------------ 3.10 Dropdown + kalkylator ------------------------ */
-    function populateSelect(){
-      const sel=document.getElementById('compoundSelect'); sel.innerHTML='';
-      const names=new Set();
-      Object.values(window.data).forEach(arr=>arr.forEach(c=>names.add(c.name)));
-      [...names].sort().forEach(n=>sel.add(new Option(n,n)));
-    }
-    populateSelect();
-
-    document.getElementById('calcBtn').onclick=()=>{
-      const sel=document.getElementById('compoundSelect');
-      const comp=find(sel.value);
-      const kg=parseFloat(document.getElementById('weightInput').value);
-      const out=document.getElementById('doseOut');
-      if(!comp){ out.textContent='Substansen hittades inte.'; return; }
-
-      let txt=`Typdos: ${comp.dose||'—'}`;
-      if(comp.dosePerKg&&kg){
-        const [lo,hi]=comp.dosePerKg.map(d=>(d*kg).toFixed(2));
-        txt+=`<br>≈ ${lo} – ${hi} mg/vecka (vid ${kg} kg)`;
-      }
-      out.innerHTML=txt;
-    };
+function applyFilters () {
+  maxRiskCache = parseInt($("#riskRange").value, 10);
+  $all('[data-name]').forEach(card => {
+    const info = LOOKUP[canon(card.dataset.name)] || {};
+    const riskOK = (info.risk || 5) <= maxRiskCache;
+    const tagOK  = [...activeTags].every(t => (info.tags || []).includes(t));
+    card.style.display = (riskOK && tagOK) ? "block" : "none";
   });
-})();
+}
 
-/* ---- exportera om du laddar filen som ES-module ----------------------
-export default window.extraMeta;
+/* ====================== 7. Förbättra korten =========================== */
+function enhanceCard (card) {
+  if (card.dataset.enhanced) return; // redan fixad
+  card.dataset.enhanced = "1";
+
+  const info = LOOKUP[canon(card.dataset.name)] || {};
+
+  /* 7.1  Risk‑mätare */
+  const gauge = document.createElement("div");
+  gauge.className = "riskGauge";
+  gauge.style.setProperty('--risk', info.risk || 3);
+  card.prepend(gauge);
+
+  /* 7.2  Tag‑chips */
+  (info.tags || []).forEach(t => {
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.dataset.tag = t;
+    chip.textContent = t;
+    chip.classList.toggle("active", activeTags.has(t));
+    chip.onclick = () => toggleTag(t);
+    card.appendChild(chip);
+  });
+}
+
+function enhanceExistingCards () {
+  $all('[data-name]').forEach(enhanceCard);
+  // se till att sidebaren alltid matchar taggar på sidan
+  const sidebar = $("#filterSidebar");
+  if (sidebar && typeof sidebar.refreshTags === 'function') sidebar.refreshTags();
+}
+
+/* ====================== 8. MutationObserver (SPA / dynamisk) ========= */
+new MutationObserver(muts => {
+  let added = false;
+  muts.forEach(m => m.addedNodes.forEach(node => {
+    if (node.nodeType === 1 && node.matches && node.matches('[data-name]')) {
+      enhanceCard(node);
+      added = true;
+    }
+  }));
+  if (added) applyFilters();
+}).observe(document.body, { childList:true, subtree:true });
+
+/* ====================== 9. Disclaimer‑banner ========================= */
+function showDisclaimer () {
+  if (localStorage.getItem('bannerDismissed')) return;
+  const div = document.createElement('div');
+  div.id = 'disclaimerBanner';
+  div.innerHTML = '⚠️ Endast utbildningssyfte – ingen medicinsk rådgivning.' +
+                  '<button id="closeBanner" aria-label="Stäng">×</button>';
+  document.body.prepend(div);
+  $('#closeBanner', div).onclick = () => {
+    div.remove();
+    localStorage.setItem('bannerDismissed', '1');
+  };
+}
+
+/* ====================== 10. Init ===================================== */
+function init () {
+  document.readyState === 'loading'
+    ? document.addEventListener('DOMContentLoaded', run, { once:true })
+    : run();
+
+  function run () {
+    buildSidebar();
+    enhanceExistingCards();
+    showDisclaimer();
+  }
+}
+init();
+
+/* ---- Export (om du laddar som ES‑module) -----------------------------
+export default window.compLookup;
 */
