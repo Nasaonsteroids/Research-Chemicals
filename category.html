@@ -55,7 +55,11 @@
 
   /* grid becomes narrower cards so two can still fit */
   .grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+ /* Dölj texten “Filter” men behåll ikonen */
+  #filterToggle .label { display: none; }
 
+  /* Gör knappen lite kvadratisk så den liknar en vanlig app-ikon */
+  #filterToggle { padding: 0.5rem 0.55rem; }
   /* cards shrink a bit */
   .card    { padding: 1rem; }
   .card h3 { font-size: 1rem; }

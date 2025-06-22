@@ -266,18 +266,19 @@ function buildSidebar () {
     <button id="calcBtn" style="margin-top:0.3rem;">Beräkna</button>
     <p id="doseOut" style="margin-top:0.6rem;font-size:0.9rem;"></p>`;
 
-  // 5.2  Toggle‑knapp
-  if (!$("#filterToggle")) {
-    const btn = Object.assign(document.createElement("button"), {
-      id: "filterToggle",
-      textContent: "☰ Filter",
-      onclick () {
-        sidebar.classList.toggle("open");
-        if (sidebar.classList.contains("open")) populateSelect();
-      }
-    });
-    document.body.appendChild(btn);
-  }
+// 5.2  Toggle-knapp
+if (!$("#filterToggle")) {
+  const btn = document.createElement("button");
+  btn.id = "filterToggle";
+  // ikon + text i varsitt element
+  btn.innerHTML = '<span class="icon">☰</span><span class="label"> Filter</span>';
+  btn.onclick = () => {
+    sidebar.classList.toggle("open");
+    if (sidebar.classList.contains("open")) populateSelect();
+  };
+  document.body.appendChild(btn);
+}
+
 
   // 5.3  Risk‑slider
   const riskInput = $("#riskRange");
