@@ -407,7 +407,7 @@ function showDisclaimer () {
   if (localStorage.getItem('bannerDismissed')) return;
   const div = document.createElement('div');
   div.id = 'disclaimerBanner';
-  div.innerHTML = '⚠️ Endast utbildningssyfte – ingen medicinsk rådgivning.' +
+  div.innerHTML = '⚠️ Educational Only – Not medical advice.' +
                   '<button id="closeBanner" aria-label="Stäng">×</button>';
   document.body.prepend(div);
   $('#closeBanner', div).onclick = () => {
